@@ -88,12 +88,14 @@ struct RingView: View {
                 .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .widgetAccentable()
+                .animation(.easeInOut(duration: 0.9), value: progress)   // grows from the previous value on each timeline update
             if showPace, let pace {
                 Capsule()
                     .fill(Color.white.opacity(0.95))
                     .frame(width: 2, height: lineWidth + 4)
                     .offset(y: -0.5 * 0)
                     .modifier(RingTick(fraction: pace))
+                    .animation(.easeInOut(duration: 0.9), value: pace)
             }
         }
     }
@@ -128,11 +130,13 @@ struct PaceBar: View {
                     .fill(color)
                     .frame(width: max(height, w * min(utilization, 100) / 100))
                     .widgetAccentable()
+                    .animation(.easeInOut(duration: 0.9), value: utilization)
                 if showMarker, let pace {
                     RoundedRectangle(cornerRadius: 1)
                         .fill(Color.white.opacity(0.95))
                         .frame(width: 2, height: height - 4)
                         .offset(x: max(1, min(w - 3, w * pace - 1)))
+                        .animation(.easeInOut(duration: 0.9), value: pace)
                 }
             }
         }
@@ -270,6 +274,7 @@ struct BreakdownBar: View {
                     Spacer(minLength: 0)
                 }
                 .clipShape(Capsule())
+                .animation(.easeInOut(duration: 0.9), value: rows)
             }
             .frame(height: 3)
             HStack(spacing: 8) {
@@ -528,7 +533,7 @@ struct GlassOrbitView: View {
         HStack(spacing: 6) {
             Text(w.title).font(.system(size: 10.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.6)).frame(width: 44, alignment: .leading).lineLimit(1).minimumScaleFactor(0.7)
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 6)
-            Text(Fmt.percent(w.utilization)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit().frame(width: 30, alignment: .trailing)
+            Text(Fmt.percent(w.utilization)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit().frame(width: 30, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
                 Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 9, design: .rounded)).foregroundStyle(.white.opacity(0.5)).frame(width: 50, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
             }
@@ -607,7 +612,7 @@ struct PaceBarsView: View {
             }
             .frame(width: 62, alignment: .leading)
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(lvl), showMarker: options[.showPaceMarker], height: barHeight)
-            Text(Fmt.percent(w.utilization)).font(.system(size: 12, weight: .bold, design: .rounded)).monospacedDigit().frame(width: 36, alignment: .trailing)
+            Text(Fmt.percent(w.utilization)).font(.system(size: 12, weight: .bold, design: .rounded)).monospacedDigit().frame(width: 36, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
                 Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 10, design: .rounded)).foregroundStyle(.white.opacity(0.55)).frame(width: 56, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
             }

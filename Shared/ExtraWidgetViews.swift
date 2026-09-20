@@ -182,6 +182,7 @@ struct ContextBar: View {
             .frame(width: w)
             .background(Palette.track)
             .clipShape(Capsule())
+            .animation(.easeInOut(duration: 0.9), value: context.used)
         }
         .frame(height: height)
     }
