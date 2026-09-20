@@ -13,12 +13,12 @@
 		B00000000000000000000004 /* ClaudeUsageApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000004 /* ClaudeUsageApp.swift */; };
 		B00000000000000000000005 /* Collector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000005 /* Collector.swift */; };
 		B00000000000000000000006 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000006 /* SettingsView.swift */; };
-		B00000000000000000000012 /* Gallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* Gallery.swift */; };
 		B00000000000000000000007 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000001 /* Models.swift */; };
 		B00000000000000000000008 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000002 /* Settings.swift */; };
 		B00000000000000000000009 /* UsageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000003 /* UsageViews.swift */; };
 		B00000000000000000000010 /* ClaudeUsageWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000008 /* ClaudeUsageWidget.swift */; };
 		B00000000000000000000011 /* OrbitWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* OrbitWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B00000000000000000000012 /* Gallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* Gallery.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,13 +53,13 @@
 		F00000000000000000000005 /* Collector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collector.swift; sourceTree = "<group>"; };
 		F00000000000000000000006 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F00000000000000000000007 /* Orbit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Orbit.entitlements; sourceTree = "<group>"; };
-		F00000000000000000000013 /* Gallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gallery.swift; sourceTree = "<group>"; };
-		F00000000000000000000014 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		F00000000000000000000008 /* ClaudeUsageWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageWidget.swift; sourceTree = "<group>"; };
 		F00000000000000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F00000000000000000000010 /* OrbitWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OrbitWidget.entitlements; sourceTree = "<group>"; };
 		F00000000000000000000011 /* Orbit for Claude Code.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Orbit for Claude Code.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F00000000000000000000012 /* OrbitWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OrbitWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F00000000000000000000013 /* Gallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gallery.swift; sourceTree = "<group>"; };
+		F00000000000000000000014 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

@@ -5,7 +5,7 @@
 DEVELOPMENT_TEAM = DGV8253YN4
 
 // App Group shared between the menu bar app and the widget extension. macOS style: <TeamID>.<identifier>.
-APP_GROUP_ID = $(DEVELOPMENT_TEAM).com.kazuhide.OrbitForClaudeCode
+APP_GROUP_ID = $(DEVELOPMENT_TEAM).com.akito.OrbitForClaudeCode
 
 // Bundle identifier prefix. The app is $(BUNDLE_ID_PREFIX).OrbitForClaudeCode, the widget $(BUNDLE_ID_PREFIX).OrbitForClaudeCode.widget.
-BUNDLE_ID_PREFIX = com.kazuhide
+BUNDLE_ID_PREFIX = com.akito

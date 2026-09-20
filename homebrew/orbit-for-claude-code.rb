@@ -21,11 +21,11 @@ cask "orbit-for-claude-code" do
     system_command "/usr/bin/pluginkit", args: ["-a", "#{appdir}/Orbit for Claude Code.app/Contents/PlugIns/OrbitWidget.appex"]
   end
 
-  uninstall quit: "com.kazuhide.OrbitForClaudeCode"
+  uninstall quit: "com.akito.OrbitForClaudeCode"
 
   zap trash: [
-    "~/Library/Group Containers/*.com.kazuhide.OrbitForClaudeCode",
-    "~/Library/Preferences/com.kazuhide.OrbitForClaudeCode.plist",
+    "~/Library/Group Containers/*.com.akito.OrbitForClaudeCode",
+    "~/Library/Preferences/com.akito.OrbitForClaudeCode.plist",
   ]
 
   caveats <<~EOS

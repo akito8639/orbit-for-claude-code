@@ -57,7 +57,7 @@ struct OAuthCredentials {
 
 /// A user-supplied long-lived OAuth token (from `claude setup-token`), kept in the app's own keychain item.
 enum ManualTokenStore {
-    static let service = "com.kazuhide.OrbitForClaudeCode.manual-token"
+    static let service = "com.akito.OrbitForClaudeCode.manual-token"
     static let account = "oauth"
 
     private static var query: [String: Any] {

@@ -11,7 +11,7 @@ enum AppConstants {
            let first = groups.first {
             return first
         }
-        return "com.kazuhide.OrbitForClaudeCode"   // unsigned fallback (previews, tests)
+        return "com.akito.OrbitForClaudeCode"   // unsigned fallback (previews, tests)
     }()
     static let widgetKind = "OrbitWidget"
     static let snapshotFileName = "snapshot.json"
