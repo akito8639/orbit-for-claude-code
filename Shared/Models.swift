@@ -213,6 +213,19 @@ struct LocalSession: Codable, Hashable, Identifiable {
     var context: ContextUsage? = nil
     var name: String? = nil          // title given in the desktop app (sessions/<pid>.json "name")
     var hostSessionId: String? = nil // desktop app session id ("local_…"), usable with claude://code/continue?session=
+    var status: String? = nil        // written live by Claude Code: idle / busy / waiting
+    var waitingFor: String? = nil    // "permission prompt" / "input needed" when status == waiting
+    var statusUpdatedAt: Date? = nil
+
+    enum Activity { case working, needsInput, permission, idle, unknown }
+    var activity: Activity {
+        switch status {
+        case "busy": return .working
+        case "waiting": return waitingFor?.contains("permission") == true ? .permission : .needsInput
+        case "idle": return .idle
+        default: return .unknown
+        }
+    }
 
     var projectName: String { (cwd as NSString).lastPathComponent }
 
@@ -285,11 +298,11 @@ struct UsageSnapshot: Codable {
                                      components: ["claude.ai", "Claude Console (platform.claude.com)", "Claude API (api.anthropic.com)", "Claude Code", "Claude Cowork", "Claude for Government"].map { ServiceStatus.StatusComponent(name: $0, status: "operational") }),
         sessions: [
             LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/my-app", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli",
-                         context: ContextUsage(input: 1_200, cacheRead: 412_000, cacheCreation: 9_800, output: 900, model: "claude-fable-5-1", limit: 1_000_000, at: .now), name: "Onboarding flow rewrite"),
+                         context: ContextUsage(input: 1_200, cacheRead: 412_000, cacheCreation: 9_800, output: 900, model: "claude-fable-5-1", limit: 1_000_000, at: .now), name: "Onboarding flow rewrite", status: "busy", statusUpdatedAt: .now.addingTimeInterval(-40)),
             LocalSession(id: "2", pid: 2, cwd: "/Users/you/Development/website", startedAt: .now.addingTimeInterval(-4 * 3600), version: "2.1.275", entrypoint: "claude-desktop",
-                         context: ContextUsage(input: 3_400, cacheRead: 156_000, cacheCreation: 2_100, output: 400, model: "claude-sonnet-5", limit: 200_000, at: .now), name: "Landing page copy"),
+                         context: ContextUsage(input: 3_400, cacheRead: 156_000, cacheCreation: 2_100, output: 400, model: "claude-sonnet-5", limit: 200_000, at: .now), name: "Landing page copy", status: "waiting", waitingFor: "permission prompt", statusUpdatedAt: .now.addingTimeInterval(-120)),
             LocalSession(id: "3", pid: 3, cwd: "/Users/you/Development/api-server", startedAt: .now.addingTimeInterval(-90), version: "2.1.275", entrypoint: "cli",
-                         context: ContextUsage(input: 800, cacheRead: 38_000, cacheCreation: 12_000, output: 300, model: "claude-fable-5-1", limit: 1_000_000, at: .now)),
+                         context: ContextUsage(input: 800, cacheRead: 38_000, cacheCreation: 12_000, output: 300, model: "claude-fable-5-1", limit: 1_000_000, at: .now), status: "idle", statusUpdatedAt: .now.addingTimeInterval(-900)),
         ],
         today: LocalUsageToday(inputTokens: 120_000, outputTokens: 38_000, cacheCreationTokens: 410_000, cacheReadTokens: 2_900_000, messages: 212, estimatedCostUSD: 14.2,
                                byModel: ["claude-fable-5-1": 2_600_000, "claude-sonnet-5": 700_000, "claude-haiku-4-5-20251001": 168_000]),

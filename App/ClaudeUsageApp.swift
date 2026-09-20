@@ -14,8 +14,13 @@ final class UsageStore: ObservableObject {
     @Published var options: DisplayOptions = AppSettings.snapshot()
 
     private var timer: Timer?
+    private var sessionTimer: Timer?
 
     func start() {
+        // Cheap poll of ~/.claude/sessions so the activity lamps follow Claude Code within ~20 s.
+        sessionTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
+            Task { await self?.pollSessions() }
+        }
         // No usage data yet (first run / no token): show settings right away, don't wait for the first fetch.
         if snapshot.windows.isEmpty { Self.openSettingsWindow() }
         Task { await refresh() }
@@ -54,6 +59,24 @@ final class UsageStore: ObservableObject {
         options = AppSettings.snapshot()
         reschedule()
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Re-reads session status/name only (no transcript parsing); keeps the context numbers from the last full refresh.
+    func pollSessions() async {
+        guard !isRefreshing, options[.showSessions] else { return }
+        let fresh = await Task.detached(priority: .utility) { LocalScanner.runningSessions(includeContext: false) }.value
+        let old = snapshot.sessions
+        let merged = fresh.map { s -> LocalSession in
+            var m = s
+            m.context = old.first { $0.id == s.id }?.context
+            return m
+        }
+        let changed = merged.map { "\($0.id)|\($0.status ?? "")|\($0.waitingFor ?? "")|\($0.name ?? "")" } != old.map { "\($0.id)|\($0.status ?? "")|\($0.waitingFor ?? "")|\($0.name ?? "")" }
+        guard changed else { return }
+        snapshot.sessions = merged
+        try? SnapshotStore.save(snapshot)
+        WidgetCenter.shared.reloadTimelines(ofKind: "OrbitSessionsWidget")
+        WidgetCenter.shared.reloadTimelines(ofKind: AppConstants.widgetKind)
     }
 
     func refresh(forceTokenRefresh: Bool = false) async {

@@ -332,7 +332,7 @@ struct ExtrasDetail: View {
                     // The large widget only has room for two rows; the count in the heading covers the rest.
                     ForEach(snapshot.sessions.prefix(maxSessionRows)) { s in
                         HStack(spacing: 6) {
-                            Image(systemName: "terminal").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.ok)
+                            Image(systemName: "terminal").font(.system(size: 9, weight: .bold)).foregroundStyle(ActivityStyle.color(s.activity))
                             Text(s.displayName(options)).font(body1).lineLimit(1).truncationMode(.tail)
                             Spacer(minLength: 4)
                             if let st = s.startedAt { Text(Fmt.relative(st, now: now)).font(cap).foregroundStyle(.white.opacity(0.5)).lineLimit(1).fixedSize() }

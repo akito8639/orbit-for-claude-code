@@ -29,6 +29,37 @@ private struct WidgetHeader: View {
 
 // MARK: - Sessions
 
+/// Colour and label for a session's live activity (same source as the desktop app's indicator).
+enum ActivityStyle {
+    static func color(_ a: LocalSession.Activity) -> Color {
+        switch a {
+        case .working: return Palette.claude
+        case .needsInput, .permission: return Palette.bad
+        case .idle: return Palette.ok
+        case .unknown: return Color.white.opacity(0.35)
+        }
+    }
+    static func label(_ a: LocalSession.Activity) -> String? {
+        switch a {
+        case .working: return L("working")
+        case .needsInput: return L("input needed")
+        case .permission: return L("permission")
+        case .idle: return L("idle")
+        case .unknown: return nil
+        }
+    }
+}
+
+struct ActivityLamp: View {
+    var activity: LocalSession.Activity
+    var size: CGFloat = 6
+    var body: some View {
+        let c = ActivityStyle.color(activity)
+        Circle().fill(c).frame(width: size, height: size)
+            .shadow(color: c.opacity(activity == .working || activity == .needsInput || activity == .permission ? 0.9 : 0.5), radius: activity == .idle ? 1.5 : 3)
+    }
+}
+
 struct SessionsWidgetView: View {
     var snapshot: UsageSnapshot
     var options: DisplayOptions
@@ -54,7 +85,7 @@ struct SessionsWidgetView: View {
                 .foregroundStyle(.white)
                 ForEach(sessions.prefix(2)) { s in
                     HStack(spacing: 4) {
-                        Circle().fill(Palette.ok).frame(width: 5, height: 5)
+                        ActivityLamp(activity: s.activity, size: 5)
                         Text(s.displayName(options)).font(fonts.body(10)).foregroundStyle(.white.opacity(0.85)).lineLimit(1).truncationMode(.middle)
                     }
                 }
@@ -79,8 +110,11 @@ struct SessionsWidgetView: View {
     private func row(_ s: LocalSession) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
-                Circle().fill(Palette.ok).frame(width: 6, height: 6).shadow(color: Palette.ok.opacity(0.7), radius: 2)
+                ActivityLamp(activity: s.activity)
                 Text(s.displayName(options)).font(fonts.body(11.5, .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.tail)
+                if size == .medium, let l = ActivityStyle.label(s.activity), s.activity != .idle {
+                    Text(l).font(fonts.cap(9)).foregroundStyle(ActivityStyle.color(s.activity)).lineLimit(1).fixedSize()
+                }
                 Spacer(minLength: 4)
                 if size == .medium, let c = s.context {
                     Text("\(c.percent)%").font(fonts.cap()).foregroundStyle(.white.opacity(0.75)).monospacedDigit().lineLimit(1).fixedSize()
@@ -94,6 +128,10 @@ struct SessionsWidgetView: View {
                 // Second line: model and the desktop-style "566.4k / 1M (57%)"
                 HStack(spacing: 6) {
                     Text(TodayWidgetView.shortModel(c.model)).font(fonts.cap(9.5)).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+                    if let l = ActivityStyle.label(s.activity) {
+                        Text("· " + l + (s.statusUpdatedAt.map { " " + Fmt.duration(now.timeIntervalSince($0)) } ?? ""))
+                            .font(fonts.cap(9.5)).foregroundStyle(ActivityStyle.color(s.activity)).lineLimit(1)
+                    }
                     Spacer(minLength: 4)
                     Text("\(Fmt.ctx(c.used)) / \(Fmt.ctx(c.limit)) (\(c.percent)%)")
                         .font(fonts.cap(9.5)).foregroundStyle(.white.opacity(0.8)).monospacedDigit().lineLimit(1).fixedSize()

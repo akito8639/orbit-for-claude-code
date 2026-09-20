@@ -339,7 +339,7 @@ enum StatusAPI {
 enum LocalScanner {
     static let claudeDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude")
 
-    static func runningSessions() -> [LocalSession] {
+    static func runningSessions(includeContext: Bool = true) -> [LocalSession] {
         let dir = claudeDir.appendingPathComponent("sessions")
         guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return [] }
         var out: [LocalSession] = []
@@ -353,8 +353,10 @@ enum LocalScanner {
             let cwd = j["cwd"] as? String ?? "?"
             out.append(LocalSession(id: sessionId, pid: pid, cwd: cwd, startedAt: started,
                                     version: j["version"] as? String, entrypoint: j["entrypoint"] as? String,
-                                    context: contextUsage(sessionId: sessionId, cwd: cwd),
-                                    name: j["name"] as? String, hostSessionId: j["hostSessionId"] as? String))
+                                    context: includeContext ? contextUsage(sessionId: sessionId, cwd: cwd) : nil,
+                                    name: j["name"] as? String, hostSessionId: j["hostSessionId"] as? String,
+                                    status: j["status"] as? String, waitingFor: j["waitingFor"] as? String,
+                                    statusUpdatedAt: (j["statusUpdatedAt"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }))
         }
         return out.sorted { ($0.startedAt ?? .distantPast) > ($1.startedAt ?? .distantPast) }
     }

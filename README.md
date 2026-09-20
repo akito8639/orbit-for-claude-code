@@ -41,7 +41,7 @@ Only the OAuth token Claude Code stores at login works. `claude setup-token` tok
 | Extra usage credits | same, `extra_usage` |
 | Account e-mail, plan badge (MAX 20x) | `/api/oauth/profile` + keychain item |
 | Service status, Claude Code component, incidents, per-component dots | `status.claude.com/api/v2/summary.json` |
-| Running Claude Code sessions (title from the desktop app or folder name, uptime, version) and each session's context window (used / limit, cached vs fresh) | `~/.claude/sessions/*.json` (pid liveness checked) + the tail of each session's transcript in `~/.claude/projects` |
+| Running Claude Code sessions: live activity lamp (working / input needed / permission / idle, same source as the desktop app), title or folder name, uptime, version, and each session's context window (used / limit, cached vs fresh) | `~/.claude/sessions/*.json` (pid liveness checked) + the tail of each session's transcript in `~/.claude/projects` |
 | Today's tokens (input / output / cache) and API-equivalent cost | `~/.claude/projects/**/*.jsonl` modified today, deduplicated by message id |
 
 Tapping a widget: **Usage** opens the usage page on claude.ai, **Sessions** rows open that session in the Claude desktop app (`claude://code/continue?session=…`) or, for terminal sessions, the project folder in Finder, **Claude status** opens status.claude.com, **Today** refreshes immediately.
