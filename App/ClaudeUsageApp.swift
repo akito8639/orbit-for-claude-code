@@ -75,6 +75,7 @@ final class UsageStore: ObservableObject {
     }
 }
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         UsageStore.shared.start()
