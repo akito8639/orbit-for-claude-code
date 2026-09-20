@@ -11,15 +11,17 @@ private struct StyleFonts {
     func cap(_ size: CGFloat = 9.5) -> Font { mono ? .system(size: size, design: .monospaced) : .system(size: size, weight: .semibold, design: .rounded) }
 }
 
+/// "✱ Claude <section>" — same brand mark as the usage widget, then the section name in a lighter weight.
 private struct WidgetHeader: View {
     var icon: String
     var title: String
     var trailing: String?
     var fonts: StyleFonts
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.claude)
-            Text(title).font(fonts.body(12, .bold)).lineLimit(1)
+        HStack(spacing: 5) {
+            Image(systemName: "asterisk").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.claude)
+            Text("Claude").font(fonts.body(12, .bold)).lineLimit(1)
+            Text(title).font(fonts.body(12, .medium)).foregroundStyle(.white.opacity(0.75)).lineLimit(1).minimumScaleFactor(0.8)
             Spacer(minLength: 4)
             if let trailing { Text(trailing).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)).lineLimit(1) }
         }
@@ -268,7 +270,7 @@ struct StatusWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "waveform.path.ecg", title: size == .small ? L("Status") : L("Claude status"), trailing: size == .small ? nil : status?.updatedAt.map { Fmt.relative($0, now: now) }, fonts: fonts)
+            WidgetHeader(icon: "waveform.path.ecg", title: L("Status"), trailing: size == .small ? nil : status?.updatedAt.map { Fmt.relative($0, now: now) }, fonts: fonts)
             if size == .small {
                 Spacer(minLength: 0)
                 VStack(spacing: 6) {
