@@ -194,6 +194,12 @@ struct ClaudeUsageApp: App {
             Gallery.renderIconBundle(to: URL(fileURLWithPath: args[i + 1]))
             exit(0)
         }
+        if args.contains("--sessions") {
+            for s in LocalScanner.runningSessions(includeContext: false) {
+                print("\(s.projectName) | name=\(s.name ?? "-") | status=\(s.status ?? "-") | waitingFor=\(s.waitingFor ?? "-") | host=\(s.hostSessionId ?? "-")")
+            }
+            exit(0)
+        }
         if args.contains("--raw") {
             print(SnapshotStore.load()?.rawUsageJSON ?? "(no usage response stored yet)")
             exit(0)

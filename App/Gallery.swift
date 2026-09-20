@@ -62,7 +62,7 @@ extension Gallery {
     static func renderExtras(to url: URL, snapshot: UsageSnapshot) {
         let opts = AppSettings.snapshot()
         let rows: [(String, Int, (DashboardSize) -> AnyView)] = [
-            ("Sessions", 3, { AnyView(SessionsWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
+            ("Sessions", 3, { AnyView(SessionsWidgetView(snapshot: snapshot, options: opts, size: $0, linksEnabled: false)) }),
             ("Claude status", 2, { AnyView(StatusWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
             ("Today", 2, { AnyView(TodayWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
         ]

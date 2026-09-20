@@ -65,6 +65,7 @@ struct SessionsWidgetView: View {
     var options: DisplayOptions
     var size: DashboardSize
     var now: Date = .now
+    var linksEnabled: Bool = true   // false for offscreen rendering (ImageRenderer cannot draw Link)
 
     private var fonts: StyleFonts { StyleFonts(options.style) }
     private var sessions: [LocalSession] { snapshot.sessions }
@@ -95,7 +96,11 @@ struct SessionsWidgetView: View {
                 let maxRows = size == .large ? 6 : 4
                 // Each row is a link: the app opens that session in the Claude desktop app, or its folder in Finder.
                 ForEach(sessions.prefix(maxRows)) { s in
-                    Link(destination: URL(string: "orbit://session/\(s.id)")!) { row(s) }
+                    if linksEnabled {
+                        Link(destination: URL(string: "orbit://session/\(s.id)")!) { row(s) }
+                    } else {
+                        row(s)
+                    }
                 }
                 if sessions.count > maxRows { Text(L("+%d more", sessions.count - maxRows)).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)) }
                 Spacer(minLength: 0)
