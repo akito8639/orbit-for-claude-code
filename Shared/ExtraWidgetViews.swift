@@ -129,6 +129,8 @@ struct SessionsWidgetView: View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
                 ActivityLamp(activity: s.activity)
+                // Where it was started (terminal / desktop app / IDE / SDK / Cowork / remote …), before the name.
+                Image(systemName: s.entrypointSymbol).font(.system(size: 9, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
                 Text(s.displayName(options)).font(fonts.body(11.5, .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.tail)
                 if size == .medium, let l = ActivityStyle.label(s.activity), s.activity != .idle {
                     Text(l).font(fonts.cap(9)).foregroundStyle(ActivityStyle.color(s.activity)).lineLimit(1).fixedSize()
@@ -137,8 +139,6 @@ struct SessionsWidgetView: View {
                 if size == .medium, let c = s.context {
                     Text("\(c.percent)%").font(fonts.cap()).foregroundStyle(.white.opacity(0.75)).monospacedDigit().lineLimit(1).fixedSize().animatedNumber(c.used)
                 }
-                // Where it was started, as an icon (terminal / desktop app / IDE / SDK / Cowork / remote …) to leave room for the name.
-                Image(systemName: s.entrypointSymbol).font(.system(size: 9, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
                 if let st = s.startedAt { Text(Fmt.duration(now.timeIntervalSince(st))).font(fonts.cap()).foregroundStyle(.white.opacity(0.55)).lineLimit(1).fixedSize() }
             }
             if size == .large, let c = s.context {
