@@ -40,7 +40,7 @@ struct SessionsWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "terminal", title: L("Sessions"), trailing: Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
+            WidgetHeader(icon: "terminal", title: L("Sessions"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
             if sessions.isEmpty {
                 Spacer(minLength: 0)
                 Text(L("No running sessions")).font(fonts.body(11)).foregroundStyle(.white.opacity(0.6))
@@ -102,20 +102,38 @@ struct StatusWidgetView: View {
         return s.isHealthy ? L("All systems operational") : s.description
     }
 
+    /// One word for the small widget: Operational / Degraded / Outage / Maintenance.
+    private var shortWord: String {
+        guard let s = status else { return "—" }
+        if s.isHealthy { return L("Operational") }
+        switch s.indicator {
+        case "critical", "major": return L("Outage")
+        case "maintenance": return L("Maintenance")
+        default: return L("Degraded")
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "waveform.path.ecg", title: size == .small ? L("Status") : L("Claude status"), trailing: status?.updatedAt.map { Fmt.relative($0, now: now) }, fonts: fonts)
+            WidgetHeader(icon: "waveform.path.ecg", title: size == .small ? L("Status") : L("Claude status"), trailing: size == .small ? nil : status?.updatedAt.map { Fmt.relative($0, now: now) }, fonts: fonts)
             if size == .small {
                 Spacer(minLength: 0)
-                HStack(spacing: 8) {
-                    Circle().fill(Palette.status(status)).frame(width: 18, height: 18).shadow(color: Palette.status(status).opacity(0.8), radius: 6)
-                    Text(headline).font(fonts.body(12, .semibold)).foregroundStyle(.white).lineLimit(3).minimumScaleFactor(0.8)
+                VStack(spacing: 6) {
+                    Circle().fill(Palette.status(status)).frame(width: 34, height: 34)
+                        .shadow(color: Palette.status(status).opacity(0.8), radius: 10)
+                        .overlay(Circle().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                    Text(shortWord).font(fonts.body(14, .bold)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.7)
                 }
+                .frame(maxWidth: .infinity)
                 Spacer(minLength: 0)
-                if let cc = status?.claudeCodeStatus {
+                if let s = status, !s.components.isEmpty {
+                    let ok = s.components.filter(\.isOperational).count
                     HStack(spacing: 4) {
-                        Circle().fill(cc == "operational" ? Palette.ok : Palette.warn).frame(width: 5, height: 5)
-                        Text("Claude Code · " + cc.replacingOccurrences(of: "_", with: " ")).font(fonts.cap()).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+                        ForEach(s.components) { c in
+                            Circle().fill(c.isOperational ? Palette.ok : Palette.warn).frame(width: 5, height: 5)
+                        }
+                        Spacer(minLength: 2)
+                        Text(L("%d/%d operational", ok, s.components.count)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.6)).lineLimit(1).minimumScaleFactor(0.8)
                     }
                 }
             } else {
@@ -170,7 +188,7 @@ struct TodayWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "sum", title: L("Today"), trailing: Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
+            WidgetHeader(icon: "sum", title: L("Today"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
             if let t = today {
                 if size == .small {
                     Spacer(minLength: 0)

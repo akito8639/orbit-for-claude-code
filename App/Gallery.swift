@@ -61,19 +61,19 @@ extension Gallery {
     @MainActor
     static func renderExtras(to url: URL, snapshot: UsageSnapshot) {
         let opts = AppSettings.snapshot()
-        let rows: [(String, (DashboardSize) -> AnyView)] = [
-            ("Sessions", { AnyView(SessionsWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
-            ("Claude status", { AnyView(StatusWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
-            ("Today", { AnyView(TodayWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
+        let rows: [(String, Int, (DashboardSize) -> AnyView)] = [
+            ("Sessions", 3, { AnyView(SessionsWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
+            ("Claude status", 2, { AnyView(StatusWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
+            ("Today", 2, { AnyView(TodayWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
         ]
         let view = VStack(alignment: .leading, spacing: 28) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 VStack(alignment: .leading, spacing: 10) {
                     Text(row.0).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(.white)
                     HStack(alignment: .top, spacing: 20) {
-                        ForEach(Array(sizes.enumerated()), id: \.offset) { _, item in
+                        ForEach(Array(sizes.prefix(row.1).enumerated()), id: \.offset) { _, item in
                             let (size, dim) = item
-                            row.1(size)
+                            row.2(size)
                                 .padding(18)
                                 .frame(width: dim.width, height: dim.height)
                                 .background(DashboardBackground(style: opts.style, level: .onTrack))

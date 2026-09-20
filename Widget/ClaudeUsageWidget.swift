@@ -131,7 +131,7 @@ struct OrbitStatusWidget: Widget {
         }
         .configurationDisplayName(Text(L("Claude status")))
         .description(Text(L("Service status from status.claude.com: overall, per component, and open incidents.")))
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
@@ -144,7 +144,7 @@ struct OrbitTodayWidget: Widget {
         }
         .configurationDisplayName(Text(L("Today")))
         .description(Text(L("Today's tokens and API-equivalent cost from local Claude Code logs, by model.")))
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
