@@ -294,8 +294,13 @@ struct ExtrasDetail: View {
     var options: DisplayOptions
     var mono: Bool = false
     var now: Date = .now
-    var maxSessionRows: Int = 1   // the usage widget shows only the newest session; the Sessions widget lists them all
+    var maxSessionRows: Int = 1   // the usage widget shows only the most recently changed session; the Sessions widget lists them all
     var sessionsCompact: Bool = false   // true: one line (count + activity lamps), no session row
+
+    /// Sessions ordered by their latest state change (falls back to start time).
+    private var recentlyChanged: [LocalSession] {
+        snapshot.sessions.sorted { ($0.statusUpdatedAt ?? $0.startedAt ?? .distantPast) > ($1.statusUpdatedAt ?? $1.startedAt ?? .distantPast) }
+    }
 
     private var body1: Font { mono ? .system(size: 11, design: .monospaced) : .system(size: 11, weight: .medium, design: .rounded) }
     private var cap: Font { mono ? .system(size: 9.5, design: .monospaced) : .system(size: 9.5, weight: .semibold, design: .rounded) }
@@ -333,12 +338,17 @@ struct ExtrasDetail: View {
                 }
             } else if options[.showSessions] {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L("RUNNING SESSIONS") + " · \(snapshot.sessions.count)").font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
+                    HStack(spacing: 6) {
+                        Text(L("RUNNING SESSIONS") + " · \(snapshot.sessions.count)").font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
+                        HStack(spacing: 3) {
+                            ForEach(snapshot.sessions.prefix(8)) { s in ActivityLamp(activity: s.activity, size: 5) }
+                        }
+                    }
                     if snapshot.sessions.isEmpty {
                         Text(L("none")).font(body1).foregroundStyle(.white.opacity(0.6))
                     }
                     // The large widget only has room for two rows; the count in the heading covers the rest.
-                    ForEach(snapshot.sessions.prefix(maxSessionRows)) { s in
+                    ForEach(recentlyChanged.prefix(maxSessionRows)) { s in
                         HStack(spacing: 6) {
                             Image(systemName: "terminal").font(.system(size: 9, weight: .bold)).foregroundStyle(ActivityStyle.color(s.activity))
                             Text(s.displayName(options)).font(body1).lineLimit(1).truncationMode(.tail)
