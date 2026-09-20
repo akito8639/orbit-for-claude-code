@@ -1,0 +1,68 @@
+name: Release
+
+# Tag `v1.2.3` → build, sign with Developer ID, notarize, zip, attach to the GitHub release.
+# Required repository secrets:
+#   DEVELOPER_ID_P12          base64 of the "Developer ID Application" certificate (.p12)
+#   DEVELOPER_ID_P12_PASSWORD password of that .p12
+#   DEVELOPMENT_TEAM          Apple Team ID (e.g. ABCDE12345)
+#   NOTARY_APPLE_ID           Apple ID used for notarization
+#   NOTARY_PASSWORD           app-specific password for that Apple ID
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_27.0.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Import signing certificate
+        env:
+          P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          echo "$P12" | base64 --decode > cert.p12
+          security create-keychain -p ci build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci build.keychain
+          security import cert.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
+
+      - name: Build and sign
+        env:
+          TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          xcodebuild -project Orbit.xcodeproj -scheme Orbit -configuration Release \
+            -derivedDataPath build \
+            DEVELOPMENT_TEAM="$TEAM" \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp" build
+
+      - name: Notarize and staple
+        env:
+          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+          TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: |
+          APP="build/Build/Products/Release/Orbit for Claude Code.app"
+          ditto -c -k --keepParent "$APP" Orbit.zip
+          xcrun notarytool submit Orbit.zip --apple-id "$APPLE_ID" --password "$APP_PASSWORD" --team-id "$TEAM" --wait
+          xcrun stapler staple "$APP"
+          rm Orbit.zip
+          ditto -c -k --keepParent "$APP" "Orbit-for-Claude-Code-${GITHUB_REF_NAME#v}.zip"
+          shasum -a 256 "Orbit-for-Claude-Code-${GITHUB_REF_NAME#v}.zip" | tee sha256.txt
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Orbit-for-Claude-Code-*.zip
+            sha256.txt
+          generate_release_notes: true

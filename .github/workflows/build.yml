@@ -1,0 +1,21 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    # Needs Xcode 27 (macOS 26 SDK). Pin to an image that ships it.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_27.0.app || sudo xcode-select -s /Applications/Xcode.app
+      - name: Build (unsigned)
+        run: |
+          xcodebuild -project Orbit.xcodeproj -scheme Orbit -configuration Release \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=CI000000 build | xcpretty || true
+          test -d "build/Build/Products/Release/Orbit for Claude Code.app"
