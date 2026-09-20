@@ -382,6 +382,7 @@ struct GlassOrbitView: View {
     var size: DashboardSize
     var now: Date
     var inWidget: Bool
+    var hideExtrasRow: Bool = false   // large embeds the medium block; the details below already carry this info
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
@@ -504,7 +505,9 @@ struct GlassOrbitView: View {
                     }
                 }
                 Spacer(minLength: 0)
-                ExtrasRow(snapshot: snapshot, options: options, compact: true)
+                if !hideExtrasRow {
+                    ExtrasRow(snapshot: snapshot, options: options, compact: true)
+                }
             }
         }
         }
@@ -523,8 +526,10 @@ struct GlassOrbitView: View {
     }
 
     private var large: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            medium.frame(height: 128).padding(.top, 4)
+        var top = self
+        top.hideExtrasRow = true
+        return VStack(alignment: .leading, spacing: 10) {
+            top.medium.frame(height: 118).padding(.top, 4)
             Divider().overlay(Color.white.opacity(0.15))
             ExtrasDetail(snapshot: snapshot, options: options, now: now, sessionsCompact: true)
             Spacer(minLength: 0)
