@@ -31,6 +31,13 @@ enum Palette {
 
 enum DashboardSize { case small, medium, large }
 
+extension View {
+    /// Numeric text transition + interpolation between timeline entries (digits roll, value eases).
+    func animatedNumber<V: Equatable>(_ value: V) -> some View {
+        self.contentTransition(.numericText()).animation(.easeInOut(duration: 0.9), value: value)
+    }
+}
+
 // MARK: - Root view
 
 /// One view used by the widget (all families) and the menu bar window.
@@ -225,7 +232,7 @@ struct ExtrasRow: View {
             if options[.showTodayUsage], let t = snapshot.today {
                 HStack(spacing: 4) {
                     Image(systemName: "sum").font(.system(size: 9, weight: .bold))
-                    Text(compact ? Fmt.tokens(t.totalTokens) : L("today") + " " + Fmt.tokens(t.totalTokens) + String(format: " · $%.1f", t.estimatedCostUSD))
+                    Text(compact ? Fmt.tokens(t.totalTokens) : L("today") + " " + Fmt.tokens(t.totalTokens) + String(format: " · $%.1f", t.estimatedCostUSD)).animatedNumber(t.totalTokens)
                 }
             }
             Spacer(minLength: 0)
@@ -300,7 +307,7 @@ struct BreakdownBar: View {
                     if r.percent > 0 {
                         HStack(spacing: 3) {
                             Circle().fill(colors[i % colors.count]).frame(width: 5, height: 5)
-                            Text("\(r.displayName) \(Int(r.percent.rounded()))%").lineLimit(1)
+                            Text("\(r.displayName) \(Int(r.percent.rounded()))%").lineLimit(1).animatedNumber(r.percent)
                         }
                     }
                 }
@@ -401,7 +408,7 @@ struct ExtrasDetail: View {
 
     private func stat(_ v: String, _ l: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(v).font(body1.weight(.semibold)).monospacedDigit()
+            Text(v).font(body1.weight(.semibold)).monospacedDigit().animatedNumber(v)
             Text(l).font(cap).foregroundStyle(.white.opacity(0.5))
         }
     }
@@ -453,14 +460,14 @@ struct GlassOrbitView: View {
                     if let five {
                         HStack(alignment: .lastTextBaseline, spacing: 3) {
                             Text(Fmt.percent(five.utilization)).font(.system(size: diameter * 0.11, weight: .bold, design: .rounded)).monospacedDigit()
-                                .foregroundStyle(Palette.level(five.level(at: now)))
+                                .foregroundStyle(Palette.level(five.level(at: now))).animatedNumber(five.utilization)
                             Text("5h").font(.system(size: diameter * 0.075, weight: .semibold, design: .rounded)).foregroundStyle(.white.opacity(0.7))
                         }
                     }
                     if let week {
                         HStack(alignment: .lastTextBaseline, spacing: 3) {
                             Text(Fmt.percent(week.utilization)).font(.system(size: diameter * 0.15, weight: .bold, design: .rounded)).monospacedDigit()
-                                .foregroundStyle(Palette.level(week.level(at: now)))
+                                .foregroundStyle(Palette.level(week.level(at: now))).animatedNumber(week.utilization)
                             Text(week.scopeName ?? "wk").font(.system(size: diameter * 0.075, weight: .semibold, design: .rounded)).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
                         }
                     }
@@ -476,7 +483,7 @@ struct GlassOrbitView: View {
             } else {
                 VStack(spacing: -2) {
                     Text(Fmt.percent(worst?.utilization ?? 0))
-                        .font(.system(size: diameter * 0.19, weight: .bold, design: .rounded)).monospacedDigit()
+                        .font(.system(size: diameter * 0.19, weight: .bold, design: .rounded)).monospacedDigit().animatedNumber(worst?.utilization ?? 0)
                     Text(worst?.title ?? "—").font(.system(size: diameter * 0.09, weight: .semibold, design: .rounded)).foregroundStyle(.white.opacity(0.6))
                 }
                 .widgetAccentable()
@@ -526,7 +533,7 @@ struct GlassOrbitView: View {
                 Text(Headline.text(worst, now: now, options: options, snapshot: snapshot))
                     .font(.system(size: 12.5, weight: .semibold, design: .rounded))
                     .foregroundStyle(Palette.level(worst?.level(at: now) ?? .onTrack))
-                    .lineLimit(1).minimumScaleFactor(0.65)
+                    .lineLimit(1).minimumScaleFactor(0.65).animatedNumber(worst?.utilization ?? 0)
                 ForEach(windows.prefix(4)) { w in
                     row(w)
                 }
@@ -534,7 +541,7 @@ struct GlassOrbitView: View {
                     HStack(spacing: 6) {
                         Text(L("extra")).font(.system(size: 10.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.6)).frame(width: 52, alignment: .leading)
                         PaceBar(utilization: u, pace: nil, color: Palette.claude, showMarker: false, height: 6)
-                        Text(Fmt.percent(u)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit()
+                        Text(Fmt.percent(u)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit().animatedNumber(u)
                     }
                 }
                 Spacer(minLength: 0)
@@ -601,7 +608,7 @@ struct PaceBarsView: View {
                 Text(Headline.text(worst, now: now, options: options, snapshot: snapshot))
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(Palette.level(worstLevel))
-                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .lineLimit(1).minimumScaleFactor(0.7).animatedNumber(worst?.utilization ?? 0)
             }
             Spacer(minLength: 4)
             VStack(alignment: .trailing, spacing: 1) {
@@ -651,7 +658,7 @@ struct PaceBarsView: View {
                     HStack {
                         Text(w.title).font(.system(size: 10, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.7))
                         Spacer()
-                        Text(Fmt.percent(w.utilization)).font(.system(size: 11, weight: .bold, design: .rounded)).monospacedDigit()
+                        Text(Fmt.percent(w.utilization)).font(.system(size: 11, weight: .bold, design: .rounded)).monospacedDigit().animatedNumber(w.utilization)
                     }
                     PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 8)
                 }
@@ -736,7 +743,7 @@ struct ConsoleView: View {
         return HStack(spacing: 8) {
             Text(w.title.padding(toLength: 9, withPad: " ", startingAt: 0)).font(mono(11)).foregroundStyle(dim).lineLimit(1)
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(lvl), showMarker: options[.showPaceMarker], height: barHeight)
-            Text(String(format: "%3d%%", Int(w.utilization.rounded()))).font(mono(11, .bold)).foregroundStyle(Palette.level(lvl)).monospacedDigit()
+            Text(String(format: "%3d%%", Int(w.utilization.rounded()))).font(mono(11, .bold)).foregroundStyle(Palette.level(lvl)).monospacedDigit().animatedNumber(w.utilization)
             if options[.showResetTimes] {
                 Text("↻" + Fmt.resetLabel(w.resetsAt, now: now)).font(mono(9.5)).foregroundStyle(dim).frame(width: 74, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.8)
             }
@@ -746,7 +753,7 @@ struct ConsoleView: View {
     private var summary: some View {
         HStack(spacing: 4) {
             Text("→").font(mono(11)).foregroundStyle(dim)
-            Text(Headline.text(worst, now: now, options: options, snapshot: snapshot)).font(mono(11, .semibold)).foregroundStyle(Palette.level(worstLevel)).lineLimit(1).minimumScaleFactor(0.75)
+            Text(Headline.text(worst, now: now, options: options, snapshot: snapshot)).font(mono(11, .semibold)).foregroundStyle(Palette.level(worstLevel)).lineLimit(1).minimumScaleFactor(0.75).animatedNumber(worst?.utilization ?? 0)
         }
     }
 
@@ -772,7 +779,7 @@ struct ConsoleView: View {
                     HStack {
                         Text(w.title).font(mono(10)).foregroundStyle(dim)
                         Spacer()
-                        Text(Fmt.percent(w.utilization)).font(mono(11, .bold)).foregroundStyle(Palette.level(w.level(at: now)))
+                        Text(Fmt.percent(w.utilization)).font(mono(11, .bold)).foregroundStyle(Palette.level(w.level(at: now))).animatedNumber(w.utilization)
                     }
                     PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 7)
                 }

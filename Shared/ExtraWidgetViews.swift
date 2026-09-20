@@ -86,7 +86,7 @@ struct SessionsWidgetView: View {
                 let idle = sessions.filter { $0.activity == .idle }.count
                 Spacer(minLength: 0)
                 HStack(alignment: .lastTextBaseline, spacing: 4) {
-                    Text("\(sessions.count)").font(fonts.body(36, .bold)).monospacedDigit()
+                    Text("\(sessions.count)").font(fonts.body(36, .bold)).monospacedDigit().animatedNumber(sessions.count)
                     Text(L(sessions.count == 1 ? "session" : "sessions")).font(fonts.cap(10)).foregroundStyle(.white.opacity(0.6))
                 }
                 .foregroundStyle(.white)
@@ -121,7 +121,7 @@ struct SessionsWidgetView: View {
             ActivityLamp(activity: a, size: 6)
             Text(a == .needsInput ? L("waiting for you") : (ActivityStyle.label(a) ?? "")).font(fonts.cap(10)).foregroundStyle(.white.opacity(n > 0 ? 0.85 : 0.45)).lineLimit(1)
             Spacer(minLength: 2)
-            Text("\(n)").font(fonts.body(12, .bold)).monospacedDigit().foregroundStyle(n > 0 ? ActivityStyle.color(a) : .white.opacity(0.45))
+            Text("\(n)").font(fonts.body(12, .bold)).monospacedDigit().foregroundStyle(n > 0 ? ActivityStyle.color(a) : .white.opacity(0.45)).animatedNumber(n)
         }
     }
 
@@ -135,7 +135,7 @@ struct SessionsWidgetView: View {
                 }
                 Spacer(minLength: 4)
                 if size == .medium, let c = s.context {
-                    Text("\(c.percent)%").font(fonts.cap()).foregroundStyle(.white.opacity(0.75)).monospacedDigit().lineLimit(1).fixedSize()
+                    Text("\(c.percent)%").font(fonts.cap()).foregroundStyle(.white.opacity(0.75)).monospacedDigit().lineLimit(1).fixedSize().animatedNumber(c.used)
                 }
                 if size == .large, let e = s.entrypoint {
                     Chip(text: e == "claude-desktop" ? L("desktop") : L("cli"))
@@ -152,7 +152,7 @@ struct SessionsWidgetView: View {
                     }
                     Spacer(minLength: 4)
                     Text("\(Fmt.ctx(c.used)) / \(Fmt.ctx(c.limit)) (\(c.percent)%)")
-                        .font(fonts.cap(9.5)).foregroundStyle(.white.opacity(0.8)).monospacedDigit().lineLimit(1).fixedSize()
+                        .font(fonts.cap(9.5)).foregroundStyle(.white.opacity(0.8)).monospacedDigit().lineLimit(1).fixedSize().animatedNumber(c.used)
                 }
                 .padding(.leading, 12)
             }
@@ -214,7 +214,7 @@ struct CoworkWidgetView: View {
             } else if size == .small {
                 Spacer(minLength: 0)
                 HStack(alignment: .lastTextBaseline, spacing: 4) {
-                    Text("\(recent.count)").font(fonts.body(36, .bold)).monospacedDigit()
+                    Text("\(recent.count)").font(fonts.body(36, .bold)).monospacedDigit().animatedNumber(recent.count)
                     Text(L("today")).font(fonts.cap(10)).foregroundStyle(.white.opacity(0.6))
                 }
                 .foregroundStyle(.white)
@@ -289,7 +289,7 @@ struct StatusWidgetView: View {
                             Circle().fill(c.isOperational ? Palette.ok : Palette.warn).frame(width: 5, height: 5)
                         }
                         Spacer(minLength: 2)
-                        Text(L("%d/%d operational", ok, s.components.count)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.6)).lineLimit(1).minimumScaleFactor(0.8)
+                        Text(L("%d/%d operational", ok, s.components.count)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.6)).lineLimit(1).minimumScaleFactor(0.8).animatedNumber(ok)
                     }
                 }
             } else {
@@ -348,13 +348,13 @@ struct TodayWidgetView: View {
             if let t = today {
                 if size == .small {
                     Spacer(minLength: 0)
-                    Text(Fmt.tokens(t.totalTokens)).font(fonts.body(30, .bold)).monospacedDigit().foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
+                    Text(Fmt.tokens(t.totalTokens)).font(fonts.body(30, .bold)).monospacedDigit().foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6).animatedNumber(t.totalTokens)
                     Text(L("tokens")).font(fonts.cap(10)).foregroundStyle(.white.opacity(0.6))
                     Spacer(minLength: 0)
                     HStack {
-                        Text(String(format: "$%.2f", t.estimatedCostUSD)).font(fonts.body(12, .semibold)).foregroundStyle(Palette.claude)
+                        Text(String(format: "$%.2f", t.estimatedCostUSD)).font(fonts.body(12, .semibold)).foregroundStyle(Palette.claude).animatedNumber(t.estimatedCostUSD)
                         Spacer()
-                        Text("\(t.messages) " + L("msgs")).font(fonts.cap()).foregroundStyle(.white.opacity(0.6))
+                        Text("\(t.messages) " + L("msgs")).font(fonts.cap()).foregroundStyle(.white.opacity(0.6)).animatedNumber(t.messages)
                     }
                 } else {
                     HStack(spacing: 12) {
@@ -374,7 +374,7 @@ struct TodayWidgetView: View {
                                 HStack(spacing: 6) {
                                     Text(m.0).font(fonts.cap()).foregroundStyle(.white.opacity(0.7)).frame(width: 64, alignment: .leading).lineLimit(1)
                                     PaceBar(utilization: Double(m.1) / Double(total) * 100, pace: nil, color: Palette.claude, showMarker: false, height: 5)
-                                    Text(Fmt.tokens(m.1)).font(fonts.cap()).foregroundStyle(.white.opacity(0.8)).frame(width: 44, alignment: .trailing)
+                                    Text(Fmt.tokens(m.1)).font(fonts.cap()).foregroundStyle(.white.opacity(0.8)).frame(width: 44, alignment: .trailing).animatedNumber(m.1)
                                 }
                             }
                         }
@@ -400,7 +400,7 @@ struct TodayWidgetView: View {
 
     private func stat(_ v: String, _ l: String, big: Bool = false, accent: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(v).font(fonts.body(big ? 16 : 12, .bold)).monospacedDigit().foregroundStyle(accent ? Palette.claude : .white).lineLimit(1)
+            Text(v).font(fonts.body(big ? 16 : 12, .bold)).monospacedDigit().foregroundStyle(accent ? Palette.claude : .white).lineLimit(1).animatedNumber(v)
             Text(l).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
         }
     }
