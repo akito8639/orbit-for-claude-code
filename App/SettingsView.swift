@@ -23,9 +23,9 @@ struct SettingsView: View {
 
     var body: some View {
         TabView(selection: $tab) {
-            displayTab.tabItem { Label("表示", systemImage: "switch.2") }.tag(0)
-            styleTab.tabItem { Label("デザイン", systemImage: "paintpalette") }.tag(1)
-            accountTab.tabItem { Label("接続", systemImage: "key") }.tag(2)
+            displayTab.tabItem { Label(L("Display"), systemImage: "switch.2") }.tag(0)
+            styleTab.tabItem { Label(L("Design"), systemImage: "paintpalette") }.tag(1)
+            accountTab.tabItem { Label(L("Connection"), systemImage: "key") }.tag(2)
         }
         .frame(width: 520, height: 640)
     }
@@ -33,7 +33,7 @@ struct SettingsView: View {
     private var displayTab: some View {
         Form {
             ForEach(sections, id: \.0) { section in
-                if section.0 != "認証" {
+                if section.0 != L("Authentication") {
                     Section(section.0) {
                         ForEach(section.1, id: \.self) { key in
                             Toggle(key.title, isOn: binding(key))
@@ -41,8 +41,8 @@ struct SettingsView: View {
                     }
                 }
             }
-            Section("更新") {
-                Stepper("取得間隔: \(refreshMinutes) 分", value: $refreshMinutes, in: 1...60)
+            Section(L("Refresh")) {
+                Stepper(L("Fetch interval: %d min", refreshMinutes), value: $refreshMinutes, in: 1...60)
                     .onChange(of: refreshMinutes) { _, v in AppSettings.refreshMinutes = v; store.settingsChanged() }
             }
         }
@@ -82,7 +82,7 @@ struct StylePreviewContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("ウィジェットとメニューバーの見た目").font(.headline)
+            Text(L("Widget and menu bar appearance")).font(.headline)
             ForEach(WidgetStyle.allCases) { s in
                 Button {
                     AppSettings.style = s
@@ -113,43 +113,43 @@ struct StylePreviewContent: View {
 extension SettingsView {
     private var accountTab: some View {
         Form {
-            Section("手動トークン (上級者向け)") {
-                Text(manualTokenSaved ? "保存済み — キーチェーンのトークンより優先して使います" : "未設定 — Claude Code のキーチェーン項目を使います")
+            Section(L("Manual token (advanced)")) {
+                Text(manualTokenSaved ? L("Saved — used instead of the keychain token") : L("Not set — using Claude Code's keychain item"))
                     .font(.caption).foregroundStyle(manualTokenSaved ? .green : .secondary)
-                SecureField("user:profile スコープを持つ OAuth アクセストークン", text: $manualToken)
+                SecureField(L("OAuth access token with the user:profile scope"), text: $manualToken)
                     .textFieldStyle(.roundedBorder)
                 HStack {
-                    Button("保存して再取得") {
+                    Button(L("Save and fetch")) {
                         do {
                             try ManualTokenStore.save(manualToken)
                             manualTokenSaved = ManualTokenStore.load() != nil
                             manualToken = ""
-                            manualMessage = "保存しました"
-                            Task { await store.refresh(); manualMessage = store.snapshot.errorMessage ?? "取得 OK" }
-                        } catch { manualMessage = "保存失敗: \(error.localizedDescription)" }
+                            manualMessage = L("Saved")
+                            Task { await store.refresh(); manualMessage = store.snapshot.errorMessage ?? L("Fetched OK") }
+                        } catch { manualMessage = L("Save failed: %@", error.localizedDescription) }
                     }
                     .disabled(manualToken.trimmingCharacters(in: .whitespaces).isEmpty)
-                    Button("削除") {
-                        ManualTokenStore.delete(); manualTokenSaved = false; manualMessage = "削除しました"
+                    Button(L("Delete")) {
+                        ManualTokenStore.delete(); manualTokenSaved = false; manualMessage = L("Deleted")
                         Task { await store.refresh() }
                     }
                     .disabled(!manualTokenSaved)
                     if let m = manualMessage { Text(m).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
                 }
-                Text("通常は不要です。ターミナルで `claude` を起動してログインすると、Claude Code がキーチェーンに保存するトークンを自動で使います。`claude setup-token` のトークンは user:profile スコープが無いため使えません (403)。API キー (sk-ant-api…) も不可です。")
+                Text(L("Usually not needed. Log in with `claude` in a terminal and the token Claude Code stores in the keychain is used automatically. Tokens from `claude setup-token` lack the user:profile scope (403) and API keys (sk-ant-api…) cannot read plan limits."))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Section("Claude Code の認証情報 (自動検出)") {
+            Section(L("Claude Code credentials (auto-detected)")) {
                 Text(store.credentialInfo).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
-                Text("キーチェーンの「Claude Code-credentials」または ~/.claude/.credentials.json を読み取ります。トークンは Claude Code が更新するため、期限切れの場合は一度 `claude` を起動してください。")
+                Text(L("Reads the keychain item “Claude Code-credentials” or ~/.claude/.credentials.json. Claude Code refreshes this token itself; if it has expired, run `claude` once."))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Section("トークン更新") {
+            Section(L("Token refresh")) {
                 Toggle(SettingKey.autoRefreshToken.title, isOn: binding(.autoRefreshToken))
-                Text("期限切れ時（約 8 時間ごと）に refresh token で更新し、Claude Code と同じキーチェーン項目に書き戻します。OFF にすると、ターミナルで `claude` を起動するまで使用量が止まります。")
+                Text(L("When the token expires (about every 8 hours) it is refreshed with the refresh token and written back to the same keychain item Claude Code uses. If off, usage stops updating until you run `claude` in a terminal."))
                     .font(.caption).foregroundStyle(.secondary)
                 HStack {
-                    Button("今すぐ更新して再取得") {
+                    Button(L("Refresh now and fetch")) {
                         Task {
                             await store.refresh(forceTokenRefresh: true)
                             tokenMessage = store.snapshot.errorMessage ?? "OK (\(store.snapshot.tokenState.rawValue))"
@@ -158,10 +158,10 @@ extension SettingsView {
                     if let m = tokenMessage { Text(m).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
                 }
             }
-            Section("ウィジェットの追加") {
-                Text("デスクトップを右クリック →「ウィジェットを編集」→ “Orbit for Claude Code” を追加。通知センターにも置けます。")
+            Section(L("Add the widget")) {
+                Text(L("Right-click the desktop → “Edit Widgets” → add “Orbit for Claude Code”. It also works in Notification Center."))
                     .font(.caption).foregroundStyle(.secondary)
-                Button("ウィジェットを再読み込み") { WidgetCenter.shared.reloadAllTimelines() }
+                Button(L("Reload widgets")) { WidgetCenter.shared.reloadAllTimelines() }
             }
         }
         .formStyle(.grouped)

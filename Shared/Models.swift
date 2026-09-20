@@ -64,13 +64,13 @@ struct UsageWindow: Codable, Identifiable, Hashable {
         return kind == .other ? id.replacingOccurrences(of: "_", with: " ") : kind.shortTitle
     }
 
-    /// "the week" / "the 5h" / "the Fable week" — for the headline.
-    func unitLabel(ja: Bool) -> String {
+    /// "of the week" / "of the 5h" / "of the Fable week" — for the headline (localized).
+    func unitLabel() -> String {
         switch kind {
-        case .fiveHour: return ja ? "5時間枠" : "of the 5h"
+        case .fiveHour: return L("of the 5h")
         default:
-            if let scopeName { return ja ? "\(scopeName) 週間枠" : "of the \(scopeName) week" }
-            return ja ? "週間枠" : "of the week"
+            if let scopeName { return L("of the %@ week", scopeName) }
+            return L("of the week")
         }
     }
 
@@ -112,21 +112,23 @@ enum UsageLevel: Int, Codable, Comparable {
         return .onTrack
     }
 
+    /// Lowercase label ("above target"), localized.
     var label: String {
         switch self {
-        case .onTrack: return "on track"
-        case .aboveTarget: return "above target"
-        case .wellAboveTarget: return "well above target"
-        case .exhausted: return "limit reached"
+        case .onTrack: return L("on track")
+        case .aboveTarget: return L("above target")
+        case .wellAboveTarget: return L("well above target")
+        case .exhausted: return L("limit reached")
         }
     }
 
-    var labelJa: String {
+    /// Sentence-case label for headlines ("Above target"), localized.
+    var headline: String {
         switch self {
-        case .onTrack: return "順調"
-        case .aboveTarget: return "ペース超過"
-        case .wellAboveTarget: return "大幅超過"
-        case .exhausted: return "上限到達"
+        case .onTrack: return L("On track")
+        case .aboveTarget: return L("Above target")
+        case .wellAboveTarget: return L("Well above target")
+        case .exhausted: return L("Limit reached")
         }
     }
 }
@@ -305,10 +307,10 @@ enum Fmt {
 
     static func relative(_ date: Date, now: Date = .now) -> String {
         let s = Int(now.timeIntervalSince(date))
-        if s < 60 { return "just now" }
-        if s < 3600 { return "\(s / 60)m ago" }
-        if s < 86400 { return "\(s / 3600)h ago" }
-        return "\(s / 86400)d ago"
+        if s < 60 { return L("just now") }
+        if s < 3600 { return L("%dm ago", s / 60) }
+        if s < 86400 { return L("%dh ago", s / 3600) }
+        return L("%dd ago", s / 86400)
     }
 
     static func tokens(_ n: Int) -> String {

@@ -165,16 +165,14 @@ struct StatusDot: View {
 /// Headline such as "Well above target — 85% of the week".
 struct Headline {
     static func eyebrow(_ w: UsageWindow?, options: DisplayOptions) -> String {
-        guard let w else { return options.label("NO DATA", "データなし") }
-        return options.label("WORST — CLAUDE \(w.title.uppercased())", "最悪 — CLAUDE \(w.title.uppercased())")
+        guard let w else { return L("NO DATA") }
+        return L("WORST — CLAUDE %@", w.title.uppercased())
     }
     static func text(_ w: UsageWindow?, now: Date, options: DisplayOptions, snapshot: UsageSnapshot) -> String {
         if let err = snapshot.errorMessage, snapshot.windows.isEmpty { return err }
-        guard let w else { return options.label("Waiting for data…", "データ待ち…") }
+        guard let w else { return L("Waiting for data…") }
         let lvl = w.level(at: now)
-        let unit = w.unitLabel(ja: options[.labelsJapanese])
-        let lead = options[.labelsJapanese] ? lvl.labelJa : lvl.label.prefix(1).uppercased() + lvl.label.dropFirst()
-        return "\(lead) — \(Fmt.percent(w.utilization)) \(unit)"
+        return "\(lvl.headline) — \(Fmt.percent(w.utilization)) \(w.unitLabel())"
     }
 }
 
@@ -199,13 +197,13 @@ struct ExtrasRow: View {
             if options[.showSessions] {
                 HStack(spacing: 4) {
                     Image(systemName: "terminal").font(.system(size: 9, weight: .bold))
-                    Text("\(snapshot.sessions.count) " + options.label(snapshot.sessions.count == 1 ? "session" : "sessions", "セッション"))
+                    Text(L(snapshot.sessions.count == 1 ? "%d session" : "%d sessions", snapshot.sessions.count))
                 }
             }
             if options[.showTodayUsage], let t = snapshot.today {
                 HStack(spacing: 4) {
                     Image(systemName: "sum").font(.system(size: 9, weight: .bold))
-                    Text(compact ? Fmt.tokens(t.totalTokens) : options.label("today", "今日") + " " + Fmt.tokens(t.totalTokens) + String(format: " · $%.1f", t.estimatedCostUSD))
+                    Text(compact ? Fmt.tokens(t.totalTokens) : L("today") + " " + Fmt.tokens(t.totalTokens) + String(format: " · $%.1f", t.estimatedCostUSD))
                 }
             }
             Spacer(minLength: 0)
@@ -217,9 +215,9 @@ struct ExtrasRow: View {
     }
 
     private var statusText: String {
-        guard let s = snapshot.serviceStatus else { return options.label("status ?", "稼働 ?") }
+        guard let s = snapshot.serviceStatus else { return L("status ?") }
         if let cc = s.claudeCodeStatus, cc != "operational" { return "Claude Code " + cc.replacingOccurrences(of: "_", with: " ") }
-        return s.isHealthy ? options.label("operational", "正常稼働") : s.description
+        return s.isHealthy ? L("operational") : s.description
     }
 }
 
@@ -304,7 +302,7 @@ struct ExtrasDetail: View {
         VStack(alignment: .leading, spacing: 6) {
             if options[.showServiceStatus], let s = snapshot.serviceStatus {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(options.label("CLAUDE STATUS", "稼働状況")).font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
+                    Text(L("CLAUDE STATUS")).font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
                     HStack(spacing: 6) {
                         StatusDot(status: s)
                         Text(s.description).font(body1).lineLimit(1).minimumScaleFactor(0.8)
@@ -320,15 +318,15 @@ struct ExtrasDetail: View {
             }
             if options[.showBreakdown], let rows = snapshot.breakdown, !rows.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(options.label("WEEK BY SURFACE", "週間使用量の内訳")).font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
+                    Text(L("WEEK BY SURFACE")).font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
                     BreakdownBar(rows: rows, mono: mono)
                 }
             }
             if options[.showSessions] {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(options.label("RUNNING SESSIONS", "起動中セッション") + " · \(snapshot.sessions.count)").font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
+                    Text(L("RUNNING SESSIONS") + " · \(snapshot.sessions.count)").font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
                     if snapshot.sessions.isEmpty {
-                        Text(options.label("none", "なし")).font(body1).foregroundStyle(.white.opacity(0.6))
+                        Text(L("none")).font(body1).foregroundStyle(.white.opacity(0.6))
                     }
                     ForEach(snapshot.sessions.prefix(4)) { s in
                         HStack(spacing: 6) {
@@ -343,13 +341,13 @@ struct ExtrasDetail: View {
             }
             if options[.showTodayUsage], let t = snapshot.today {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(options.label("TODAY (LOCAL LOGS)", "今日 (ローカルログ)")).font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
+                    Text(L("TODAY (LOCAL LOGS)")).font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
                     HStack(spacing: 10) {
-                        stat(Fmt.tokens(t.totalTokens), options.label("tokens", "トークン"))
+                        stat(Fmt.tokens(t.totalTokens), L("tokens"))
                         stat(Fmt.tokens(t.outputTokens), "out")
                         stat(Fmt.tokens(t.cacheReadTokens), "cache")
-                        stat("\(t.messages)", options.label("msgs", "応答"))
-                        stat(String(format: "$%.2f", t.estimatedCostUSD), options.label("API est.", "API換算"))
+                        stat("\(t.messages)", L("msgs"))
+                        stat(String(format: "$%.2f", t.estimatedCostUSD), L("API est."))
                     }
                 }
             }
@@ -411,7 +409,7 @@ struct GlassOrbitView: View {
                         HStack(alignment: .lastTextBaseline, spacing: 3) {
                             Text(Fmt.percent(five.utilization)).font(.system(size: diameter * 0.11, weight: .bold, design: .rounded)).monospacedDigit()
                                 .foregroundStyle(Palette.level(five.level(at: now)))
-                            Text(options.label("5h", "5h")).font(.system(size: diameter * 0.075, weight: .semibold, design: .rounded)).foregroundStyle(.white.opacity(0.7))
+                            Text("5h").font(.system(size: diameter * 0.075, weight: .semibold, design: .rounded)).foregroundStyle(.white.opacity(0.7))
                         }
                     }
                     if let week {
@@ -489,7 +487,7 @@ struct GlassOrbitView: View {
                 }
                 if options[.showExtraUsage], let e = snapshot.extraUsage, e.isEnabled, let u = e.utilization {
                     HStack(spacing: 6) {
-                        Text(options.label("extra", "追加")).font(.system(size: 10.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.6)).frame(width: 52, alignment: .leading)
+                        Text(L("extra")).font(.system(size: 10.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.6)).frame(width: 52, alignment: .leading)
                         PaceBar(utilization: u, pace: nil, color: Palette.claude, showMarker: false, height: 6)
                         Text(Fmt.percent(u)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit()
                     }
@@ -570,7 +568,7 @@ struct PaceBarsView: View {
             Text("Claude").font(.system(size: 15, weight: .bold, design: .rounded))
             if options[.showProfile], let p = snapshot.profile { Chip(text: p.planBadge) }
             Spacer()
-            Text(options[.labelsJapanese] ? worstLevel.labelJa : worstLevel.label).font(.system(size: 11, weight: .medium, design: .rounded)).foregroundStyle(Palette.level(worstLevel))
+            Text(worstLevel.label).font(.system(size: 11, weight: .medium, design: .rounded)).foregroundStyle(Palette.level(worstLevel))
         }
     }
 
@@ -598,7 +596,7 @@ struct PaceBarsView: View {
                 Spacer()
                 if options[.showServiceStatus] { StatusDot(status: snapshot.serviceStatus) }
             }
-            Text(options[.labelsJapanese] ? worstLevel.labelJa : worstLevel.label).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Palette.level(worstLevel))
+            Text(worstLevel.label).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Palette.level(worstLevel))
             ForEach(windows.prefix(3)) { w in
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
@@ -731,7 +729,7 @@ struct ConsoleView: View {
                 }
             }
             Spacer(minLength: 0)
-            Text(options[.labelsJapanese] ? worstLevel.labelJa : worstLevel.label).font(mono(10, .semibold)).foregroundStyle(Palette.level(worstLevel))
+            Text(worstLevel.label).font(mono(10, .semibold)).foregroundStyle(Palette.level(worstLevel))
         }
     }
 

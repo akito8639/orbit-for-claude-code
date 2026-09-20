@@ -72,7 +72,7 @@ struct ClaudeUsageWidget: Widget {
             ClaudeUsageWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Orbit for Claude Code")
-        .description("5時間 / 週間の使用量、稼働状況、起動中セッションを表示します。")
+        .description(Text(L("Shows Claude Code's 5-hour / weekly usage, service status and running sessions.")))
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

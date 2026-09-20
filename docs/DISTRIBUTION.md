@@ -22,7 +22,7 @@
 ### 4. 体裁と初回体験
 - アプリアイコン（Asset Catalog）。ウィジェットギャラリーにも使われる
 - 初回起動で認証情報が無ければ「接続」タブを自動で開き、ターミナルで `claude` にログインする手順とウィジェット追加の手順を案内
-- String Catalog で英語 / 日本語化
+- （対応済み）String Catalog で英語 / 日本語 / 簡体字中国語 / 韓国語に対応
 - 名称は "○○ for Claude Code" の形にし、「Anthropic 非公式」を明記
 - 更新手段: GitHub Releases または Sparkle。Homebrew Cask があると導入が楽
 
@@ -51,6 +51,6 @@
 
 1. Developer ID 署名 + Hardened Runtime + 公証
 2. ログイン時起動 + keychain-access-groups でウィジェット単独動作
-3. アイコン、オンボーディング、英語化
+3. （アイコン・多言語は対応済み）オンボーディング
 4. xcconfig 化、PRIVACY.md、免責文
 5. Sparkle / Homebrew Cask

@@ -18,9 +18,9 @@ enum WidgetStyle: String, CaseIterable, Identifiable, Codable {
 
     var subtitle: String {
         switch self {
-        case .glassOrbit: return "Liquid Glass のリング。macOS 27 らしい質感"
-        case .paceBars: return "参考画像に近いカプセルバー＋ペースマーカー"
-        case .console: return "ターミナル風。Claude Code の空気感"
+        case .glassOrbit: return L("Liquid Glass rings — the macOS 27 look")
+        case .paceBars: return L("Capsule bars with pace markers")
+        case .console: return L("Terminal style — the Claude Code feel")
         }
     }
 }
@@ -40,50 +40,46 @@ enum SettingKey: String, CaseIterable {
     case showSessions = "show_sessions"
     case showTodayUsage = "show_today_usage"
     case showResetTimes = "show_reset_times"
-    case labelsJapanese = "labels_japanese"
     case autoRefreshToken = "auto_refresh_token"
 
     var defaultValue: Bool {
         switch self {
-        case .labelsJapanese, .showOtherWindows: return false
+        case .showOtherWindows: return false
         default: return true
         }
     }
 
     var title: String {
         switch self {
-        case .showFiveHour: return "5時間ウィンドウ"
-        case .showSevenDay: return "週間ウィンドウ"
-        case .showModelWindows: return "モデル別の週間枠 (Fable / Opus / Sonnet)"
-        case .showBreakdown: return "週間使用量の内訳 (Claude Code / チャット / Cowork)"
-        case .showExtraUsage: return "追加クレジット (Extra usage)"
-        case .showOtherWindows: return "API が返すその他の枠を自動表示"
-        case .showPaceMarker: return "ペース目標マーカー"
-        case .showProfile: return "アカウント (メール / プラン)"
-        case .showServiceStatus: return "Claude 稼働状況 (status.claude.com)"
-        case .showAllComponents: return "コンポーネント別の状態 (claude.ai / API / Console / Cowork…)"
-        case .showSessions: return "起動中の Claude Code セッション"
-        case .showTodayUsage: return "今日のトークン量 / API 換算コスト"
-        case .showResetTimes: return "リセット時刻"
-        case .labelsJapanese: return "ラベルを日本語にする"
-        case .autoRefreshToken: return "期限切れトークンを自動更新"
+        case .showFiveHour: return L("5-hour window")
+        case .showSevenDay: return L("Weekly window")
+        case .showModelWindows: return L("Per-model weekly caps (Fable / Opus / Sonnet)")
+        case .showBreakdown: return L("Weekly usage by surface (Claude Code / chat / Cowork)")
+        case .showExtraUsage: return L("Extra usage credits")
+        case .showOtherWindows: return L("Show other windows the API returns")
+        case .showPaceMarker: return L("Pace target marker")
+        case .showProfile: return L("Account (e-mail / plan)")
+        case .showServiceStatus: return L("Claude service status (status.claude.com)")
+        case .showAllComponents: return L("Per-component status (claude.ai / API / Console / Cowork…)")
+        case .showSessions: return L("Running Claude Code sessions")
+        case .showTodayUsage: return L("Today's tokens / API-equivalent cost")
+        case .showResetTimes: return L("Reset times")
+        case .autoRefreshToken: return L("Refresh expired token automatically")
         }
     }
 
     var section: String {
         switch self {
         case .showFiveHour, .showSevenDay, .showModelWindows, .showExtraUsage, .showOtherWindows, .showPaceMarker, .showResetTimes, .showBreakdown:
-            return "使用量 (OAuth usage API)"
+            return L("Usage (OAuth usage API)")
         case .showProfile:
-            return "アカウント (OAuth profile API)"
+            return L("Account (OAuth profile API)")
         case .showServiceStatus, .showAllComponents:
-            return "稼働状況"
+            return L("Service status")
         case .showSessions, .showTodayUsage:
-            return "ローカル (~/.claude)"
-        case .labelsJapanese:
-            return "表示"
+            return L("Local (~/.claude)")
         case .autoRefreshToken:
-            return "認証"
+            return L("Authentication")
         }
     }
 }
@@ -144,5 +140,4 @@ struct DisplayOptions: Hashable {
         s.windows.filter(isWindowVisible)
     }
 
-    func label(_ en: String, _ ja: String) -> String { self[.labelsJapanese] ? ja : en }
 }

@@ -34,7 +34,7 @@ final class UsageStore: ObservableObject {
         let host = NSHostingView(rootView: SettingsView().environmentObject(UsageStore.shared))
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 560),
                          styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-        w.title = "Orbit for Claude Code — 設定"
+        w.title = L("Orbit for Claude Code — Settings")
         w.contentView = host
         w.isReleasedWhenClosed = false
         w.center()
@@ -201,7 +201,7 @@ struct MenuBarPanel: View {
                 GlassEffectContainer(spacing: 8) {
                     HStack(spacing: 8) {
                         Button { Task { await store.refresh() } } label: {
-                            Label(store.isRefreshing ? "更新中…" : "更新", systemImage: "arrow.clockwise")
+                            Label(store.isRefreshing ? L("Refreshing…") : L("Refresh"), systemImage: "arrow.clockwise")
                         }
                         .disabled(store.isRefreshing)
                         Spacer()

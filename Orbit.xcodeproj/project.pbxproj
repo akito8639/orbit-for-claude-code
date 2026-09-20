@@ -20,6 +20,10 @@
 		B00000000000000000000011 /* OrbitWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* OrbitWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B00000000000000000000012 /* Gallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* Gallery.swift */; };
 		B00000000000000000000013 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000015 /* AppIcon.icon */; };
+		B00000000000000000000014 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000016 /* Localizable.xcstrings */; };
+		B00000000000000000000015 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000016 /* Localizable.xcstrings */; };
+		B00000000000000000000016 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* L10n.swift */; };
+		B00000000000000000000017 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* L10n.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +66,8 @@
 		F00000000000000000000013 /* Gallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gallery.swift; sourceTree = "<group>"; };
 		F00000000000000000000014 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		F00000000000000000000015 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		F00000000000000000000016 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		F00000000000000000000017 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +114,8 @@
 				F00000000000000000000001 /* Models.swift */,
 				F00000000000000000000002 /* Settings.swift */,
 				F00000000000000000000003 /* UsageViews.swift */,
+				F00000000000000000000017 /* L10n.swift */,
+				F00000000000000000000016 /* Localizable.xcstrings */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -163,6 +171,7 @@
 			buildPhases = (
 				S00000000000000000000005 /* Sources */,
 				S00000000000000000000006 /* Frameworks */,
+				S00000000000000000000008 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -198,6 +207,8 @@
 			knownRegions = (
 				en,
 				ja,
+				"zh-Hans",
+				ko,
 				Base,
 			);
 			mainGroup = G00000000000000000000001;
@@ -217,6 +228,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				B00000000000000000000013 /* AppIcon.icon in Resources */,
+				B00000000000000000000014 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		S00000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00000000000000000000015 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,6 +254,7 @@
 				B00000000000000000000005 /* Collector.swift in Sources */,
 				B00000000000000000000006 /* SettingsView.swift in Sources */,
 				B00000000000000000000012 /* Gallery.swift in Sources */,
+				B00000000000000000000016 /* L10n.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,6 +266,7 @@
 				B00000000000000000000008 /* Settings.swift in Sources */,
 				B00000000000000000000009 /* UsageViews.swift in Sources */,
 				B00000000000000000000010 /* ClaudeUsageWidget.swift in Sources */,
+				B00000000000000000000017 /* L10n.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
