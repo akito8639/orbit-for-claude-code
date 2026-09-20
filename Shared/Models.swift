@@ -181,6 +181,28 @@ struct ServiceStatus: Codable, Hashable {
     var isHealthy: Bool { indicator == "none" && (claudeCodeStatus ?? "operational") == "operational" }
 }
 
+/// Context window of a session, taken from the last assistant record in its transcript.
+struct ContextUsage: Codable, Hashable {
+    var input: Int            // fresh input tokens of the last request
+    var cacheRead: Int        // tokens served from the prompt cache
+    var cacheCreation: Int    // tokens written to the cache this turn
+    var output: Int
+    var model: String
+    var limit: Int            // 200_000 or 1_000_000, inferred from the model
+    var at: Date?
+
+    /// What the desktop app shows as "used": fresh input + cached prompt.
+    var used: Int { input + cacheRead }
+    var fraction: Double { min(1, Double(used) / Double(max(1, limit))) }
+    var percent: Int { Int((Double(used) / Double(max(1, limit)) * 100).rounded()) }
+
+    static func limit(for model: String, used: Int) -> Int {
+        let m = model.lowercased()
+        let oneM = m.contains("[1m]") || m.contains("fable") || m.contains("mythos") || m.contains("opus-5") || m.contains("sonnet-5")
+        return (oneM || used > 200_000) ? 1_000_000 : 200_000
+    }
+}
+
 struct LocalSession: Codable, Hashable, Identifiable {
     var id: String
     var pid: Int32
@@ -188,6 +210,7 @@ struct LocalSession: Codable, Hashable, Identifiable {
     var startedAt: Date?
     var version: String?
     var entrypoint: String?
+    var context: ContextUsage? = nil
 
     var projectName: String { (cwd as NSString).lastPathComponent }
 }
@@ -245,9 +268,12 @@ struct UsageSnapshot: Codable {
         serviceStatus: ServiceStatus(indicator: "none", description: "All Systems Operational", claudeCodeStatus: "operational", unresolvedIncidents: [], updatedAt: .now,
                                      components: ["claude.ai", "Claude Console (platform.claude.com)", "Claude API (api.anthropic.com)", "Claude Code", "Claude Cowork", "Claude for Government"].map { ServiceStatus.StatusComponent(name: $0, status: "operational") }),
         sessions: [
-            LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/my-app", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli"),
-            LocalSession(id: "2", pid: 2, cwd: "/Users/you/Development/website", startedAt: .now.addingTimeInterval(-4 * 3600), version: "2.1.275", entrypoint: "claude-desktop"),
-            LocalSession(id: "3", pid: 3, cwd: "/Users/you/Development/api-server", startedAt: .now.addingTimeInterval(-90), version: "2.1.275", entrypoint: "cli"),
+            LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/my-app", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli",
+                         context: ContextUsage(input: 1_200, cacheRead: 412_000, cacheCreation: 9_800, output: 900, model: "claude-fable-5-1", limit: 1_000_000, at: .now)),
+            LocalSession(id: "2", pid: 2, cwd: "/Users/you/Development/website", startedAt: .now.addingTimeInterval(-4 * 3600), version: "2.1.275", entrypoint: "claude-desktop",
+                         context: ContextUsage(input: 3_400, cacheRead: 156_000, cacheCreation: 2_100, output: 400, model: "claude-sonnet-5", limit: 200_000, at: .now)),
+            LocalSession(id: "3", pid: 3, cwd: "/Users/you/Development/api-server", startedAt: .now.addingTimeInterval(-90), version: "2.1.275", entrypoint: "cli",
+                         context: ContextUsage(input: 800, cacheRead: 38_000, cacheCreation: 12_000, output: 300, model: "claude-fable-5-1", limit: 1_000_000, at: .now)),
         ],
         today: LocalUsageToday(inputTokens: 120_000, outputTokens: 38_000, cacheCreationTokens: 410_000, cacheReadTokens: 2_900_000, messages: 212, estimatedCostUSD: 14.2,
                                byModel: ["claude-fable-5-1": 2_600_000, "claude-sonnet-5": 700_000, "claude-haiku-4-5-20251001": 168_000]),
@@ -334,6 +360,13 @@ enum Fmt {
     }
 
     static func percent(_ v: Double) -> String { "\(Int(v.rounded()))%" }
+
+    /// "564.1k", "1M", "200k" — the desktop app's context-window style.
+    static func ctx(_ n: Int) -> String {
+        if n >= 1_000_000 { return n % 1_000_000 == 0 ? "\(n / 1_000_000)M" : String(format: "%.1fM", Double(n) / 1_000_000) }
+        if n >= 1_000 { return n % 1_000 == 0 ? "\(n / 1_000)k" : String(format: "%.1fk", Double(n) / 1_000) }
+        return "\(n)"
+    }
 
     static func clockNow(_ now: Date = .now) -> String {
         let df = DateFormatter()

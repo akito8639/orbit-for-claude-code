@@ -349,11 +349,62 @@ enum LocalScanner {
                   let pid = j["pid"] as? Int32 else { continue }
             guard kill(pid, 0) == 0 else { continue }   // process still alive?
             let started = (j["startedAt"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }
-            out.append(LocalSession(id: j["sessionId"] as? String ?? f.lastPathComponent, pid: pid,
-                                    cwd: j["cwd"] as? String ?? "?", startedAt: started,
-                                    version: j["version"] as? String, entrypoint: j["entrypoint"] as? String))
+            let sessionId = j["sessionId"] as? String ?? f.lastPathComponent
+            let cwd = j["cwd"] as? String ?? "?"
+            out.append(LocalSession(id: sessionId, pid: pid, cwd: cwd, startedAt: started,
+                                    version: j["version"] as? String, entrypoint: j["entrypoint"] as? String,
+                                    context: contextUsage(sessionId: sessionId, cwd: cwd)))
         }
         return out.sorted { ($0.startedAt ?? .distantPast) > ($1.startedAt ?? .distantPast) }
+    }
+
+    /// Claude Code stores transcripts at ~/.claude/projects/<cwd with non-alphanumerics replaced by "-">/<sessionId>.jsonl
+    static func transcriptURL(sessionId: String, cwd: String) -> URL? {
+        let projects = claudeDir.appendingPathComponent("projects")
+        let encoded = String(cwd.map { $0.isLetter || $0.isNumber ? $0 : "-" })
+        let direct = projects.appendingPathComponent(encoded).appendingPathComponent("\(sessionId).jsonl")
+        if FileManager.default.fileExists(atPath: direct.path) { return direct }
+        // Fallback: look through every project folder.
+        guard let dirs = try? FileManager.default.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil) else { return nil }
+        for d in dirs {
+            let u = d.appendingPathComponent("\(sessionId).jsonl")
+            if FileManager.default.fileExists(atPath: u.path) { return u }
+        }
+        return nil
+    }
+
+    /// Context window of the last assistant turn: reads only the tail of the transcript.
+    static func contextUsage(sessionId: String, cwd: String) -> ContextUsage? {
+        guard let url = transcriptURL(sessionId: sessionId, cwd: cwd),
+              let fh = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? fh.close() }
+        let size = (try? fh.seekToEnd()) ?? 0
+        let tailLen: UInt64 = 512 * 1024
+        let start = size > tailLen ? size - tailLen : 0
+        try? fh.seek(toOffset: start)
+        guard let data = try? fh.readToEnd() else { return nil }
+        let marker = Data("\"type\":\"assistant\"".utf8)
+        let iso = ISO8601DateFormatter(); iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        var result: ContextUsage?
+        var pos = data.startIndex
+        while pos < data.endIndex {
+            let end = data[pos...].firstIndex(of: 0x0A) ?? data.endIndex
+            let line = data[pos..<end]
+            pos = end + 1
+            guard line.range(of: marker) != nil,
+                  let j = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+                  let msg = j["message"] as? [String: Any],
+                  let usage = msg["usage"] as? [String: Any] else { continue }
+            let input = usage["input_tokens"] as? Int ?? 0
+            let cr = usage["cache_read_input_tokens"] as? Int ?? 0
+            let cc = usage["cache_creation_input_tokens"] as? Int ?? 0
+            let out = usage["output_tokens"] as? Int ?? 0
+            let model = msg["model"] as? String ?? "?"
+            result = ContextUsage(input: input, cacheRead: cr, cacheCreation: cc, output: out, model: model,
+                                  limit: ContextUsage.limit(for: model, used: input + cr),
+                                  at: (j["timestamp"] as? String).flatMap { iso.date(from: $0) })
+        }
+        return result
     }
 
     /// Pricing per million tokens: (input, output, cacheWrite, cacheRead). Estimates only.

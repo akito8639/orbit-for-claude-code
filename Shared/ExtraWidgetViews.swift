@@ -61,7 +61,7 @@ struct SessionsWidgetView: View {
                 if sessions.count > 2 { Text(L("+%d more", sessions.count - 2)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.5)) }
                 Spacer(minLength: 0)
             } else {
-                let maxRows = size == .large ? 11 : 4
+                let maxRows = size == .large ? 6 : 4
                 ForEach(sessions.prefix(maxRows)) { s in row(s) }
                 if sessions.count > maxRows { Text(L("+%d more", sessions.count - maxRows)).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)) }
                 Spacer(minLength: 0)
@@ -74,15 +74,60 @@ struct SessionsWidgetView: View {
     }
 
     private func row(_ s: LocalSession) -> some View {
-        HStack(spacing: 6) {
-            Circle().fill(Palette.ok).frame(width: 6, height: 6).shadow(color: Palette.ok.opacity(0.7), radius: 2)
-            Text(s.projectName).font(fonts.body(11.5, .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.middle)
-            Spacer(minLength: 4)
-            if let e = s.entrypoint {
-                Chip(text: e == "claude-desktop" ? L("desktop") : L("cli"))
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 6) {
+                Circle().fill(Palette.ok).frame(width: 6, height: 6).shadow(color: Palette.ok.opacity(0.7), radius: 2)
+                Text(s.projectName).font(fonts.body(11.5, .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.middle)
+                Spacer(minLength: 4)
+                if size == .medium, let c = s.context {
+                    Text("\(c.percent)%").font(fonts.cap()).foregroundStyle(.white.opacity(0.75)).monospacedDigit().lineLimit(1).fixedSize()
+                }
+                if size == .large, let e = s.entrypoint {
+                    Chip(text: e == "claude-desktop" ? L("desktop") : L("cli"))
+                }
+                if let st = s.startedAt { Text(Fmt.duration(now.timeIntervalSince(st))).font(fonts.cap()).foregroundStyle(.white.opacity(0.55)).lineLimit(1).fixedSize() }
             }
-            if let st = s.startedAt { Text(Fmt.duration(now.timeIntervalSince(st))).font(fonts.cap()).foregroundStyle(.white.opacity(0.55)).lineLimit(1).fixedSize() }
+            if size == .large, let c = s.context {
+                // Second line: model and the desktop-style "566.4k / 1M (57%)"
+                HStack(spacing: 6) {
+                    Text(TodayWidgetView.shortModel(c.model)).font(fonts.cap(9.5)).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text("\(Fmt.ctx(c.used)) / \(Fmt.ctx(c.limit)) (\(c.percent)%)")
+                        .font(fonts.cap(9.5)).foregroundStyle(.white.opacity(0.8)).monospacedDigit().lineLimit(1).fixedSize()
+                }
+                .padding(.leading, 12)
+            }
+            if let c = s.context {
+                ContextBar(context: c, height: size == .large ? 6 : 4).padding(.leading, size == .large ? 12 : 0)
+            }
         }
+    }
+}
+
+/// Context-window bar: cached prompt (blue), cache writes (green), fresh input (orange) over the model's limit.
+struct ContextBar: View {
+    var context: ContextUsage
+    var height: CGFloat = 5
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let lim = Double(max(1, context.limit))
+            HStack(spacing: 1) {
+                seg(Color(red: 0.36, green: 0.58, blue: 1.0), Double(context.cacheRead) / lim * w)
+                seg(Palette.ok, Double(context.cacheCreation) / lim * w)
+                seg(Palette.claude, Double(context.input) / lim * w)
+                Spacer(minLength: 0)
+            }
+            .frame(width: w)
+            .background(Palette.track)
+            .clipShape(Capsule())
+        }
+        .frame(height: height)
+    }
+
+    private func seg(_ color: Color, _ width: CGFloat) -> some View {
+        Rectangle().fill(color).frame(width: max(0, width))
     }
 }
 
