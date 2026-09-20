@@ -515,8 +515,8 @@ struct GlassOrbitView: View {
     }
 
     private var large: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            medium.frame(height: 122)
+        VStack(alignment: .leading, spacing: 10) {
+            medium.frame(height: 128).padding(.top, 4)
             Divider().overlay(Color.white.opacity(0.15))
             ExtrasDetail(snapshot: snapshot, options: options, now: now)
             Spacer(minLength: 0)
