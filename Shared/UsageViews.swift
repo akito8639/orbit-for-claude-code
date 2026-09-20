@@ -294,6 +294,7 @@ struct ExtrasDetail: View {
     var options: DisplayOptions
     var mono: Bool = false
     var now: Date = .now
+    var maxSessionRows: Int = 2
 
     private var body1: Font { mono ? .system(size: 11, design: .monospaced) : .system(size: 11, weight: .medium, design: .rounded) }
     private var cap: Font { mono ? .system(size: 9.5, design: .monospaced) : .system(size: 9.5, weight: .semibold, design: .rounded) }
@@ -328,14 +329,18 @@ struct ExtrasDetail: View {
                     if snapshot.sessions.isEmpty {
                         Text(L("none")).font(body1).foregroundStyle(.white.opacity(0.6))
                     }
-                    ForEach(snapshot.sessions.prefix(4)) { s in
+                    // The large widget only has room for two rows; the count in the heading covers the rest.
+                    ForEach(snapshot.sessions.prefix(maxSessionRows)) { s in
                         HStack(spacing: 6) {
                             Image(systemName: "terminal").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.ok)
-                            Text(s.projectName).font(body1).lineLimit(1)
+                            Text(s.projectName).font(body1).lineLimit(1).truncationMode(.middle)
                             Spacer(minLength: 4)
-                            if let st = s.startedAt { Text(Fmt.relative(st, now: now)).font(cap).foregroundStyle(.white.opacity(0.5)) }
-                            if let v = s.version { Text("v\(v)").font(cap).foregroundStyle(.white.opacity(0.4)) }
+                            if let st = s.startedAt { Text(Fmt.relative(st, now: now)).font(cap).foregroundStyle(.white.opacity(0.5)).lineLimit(1).fixedSize() }
+                            if let v = s.version { Text("v\(v)").font(cap).foregroundStyle(.white.opacity(0.4)).lineLimit(1).fixedSize() }
                         }
+                    }
+                    if snapshot.sessions.count > maxSessionRows {
+                        Text(L("+%d more", snapshot.sessions.count - maxSessionRows)).font(cap).foregroundStyle(.white.opacity(0.5))
                     }
                 }
             }
