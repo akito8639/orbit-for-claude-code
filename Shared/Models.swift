@@ -212,8 +212,17 @@ struct LocalSession: Codable, Hashable, Identifiable {
     var entrypoint: String?
     var context: ContextUsage? = nil
     var name: String? = nil          // title given in the desktop app (sessions/<pid>.json "name")
+    var hostSessionId: String? = nil // desktop app session id ("local_…"), usable with claude://code/continue?session=
 
     var projectName: String { (cwd as NSString).lastPathComponent }
+
+    /// Tap target for this session: opens it in the Claude desktop app when it was started there.
+    var deepLink: URL? {
+        if let h = hostSessionId, h.hasPrefix("local_") {
+            return URL(string: "claude://code/continue?session=\(h)&source=orbit")
+        }
+        return nil
+    }
 
     /// Title when one exists and the setting allows it, otherwise the folder name.
     func displayName(_ options: DisplayOptions) -> String {

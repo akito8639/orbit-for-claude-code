@@ -62,7 +62,10 @@ struct SessionsWidgetView: View {
                 Spacer(minLength: 0)
             } else {
                 let maxRows = size == .large ? 6 : 4
-                ForEach(sessions.prefix(maxRows)) { s in row(s) }
+                // Each row is a link: the app opens that session in the Claude desktop app, or its folder in Finder.
+                ForEach(sessions.prefix(maxRows)) { s in
+                    Link(destination: URL(string: "orbit://session/\(s.id)")!) { row(s) }
+                }
                 if sessions.count > maxRows { Text(L("+%d more", sessions.count - maxRows)).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)) }
                 Spacer(minLength: 0)
                 if size == .large {

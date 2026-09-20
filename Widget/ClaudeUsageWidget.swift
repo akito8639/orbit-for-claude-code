@@ -102,6 +102,7 @@ struct OrbitUsageWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: AppConstants.widgetKind, provider: UsageProvider()) { entry in
             ClaudeUsageWidgetEntryView(entry: entry)
+                .widgetURL(URL(string: "https://claude.ai/settings/usage")!)   // tap → usage page on claude.ai
         }
         .configurationDisplayName(Text(L("Usage")))
         .description(Text(L("Shows Claude Code's 5-hour / weekly usage, service status and running sessions.")))
@@ -115,6 +116,7 @@ struct OrbitSessionsWidget: Widget {
             SecondaryWidgetEntryView(entry: entry) { size in
                 SessionsWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
             }
+            .widgetURL(URL(string: "orbit://sessions")!)   // small widget / empty area → bring the Claude app forward
         }
         .configurationDisplayName(Text(L("Sessions")))
         .description(Text(L("Running Claude Code sessions: project, uptime and where they were started.")))
@@ -142,6 +144,7 @@ struct OrbitTodayWidget: Widget {
             SecondaryWidgetEntryView(entry: entry) { size in
                 TodayWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
             }
+            .widgetURL(URL(string: "orbit://refresh")!)   // tap → fetch now
         }
         .configurationDisplayName(Text(L("Today")))
         .description(Text(L("Today's tokens and API-equivalent cost from local Claude Code logs, by model.")))

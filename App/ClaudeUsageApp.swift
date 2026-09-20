@@ -80,10 +80,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UsageStore.shared.start()
     }
 
-    /// URLs handed over by widget taps (`widgetURL`). Web links go straight to the default browser.
+    /// URLs handed over by widget taps (`widgetURL` / `Link`).
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where url.scheme == "https" || url.scheme == "http" {
-            NSWorkspace.shared.open(url)
+        for url in urls {
+            switch url.scheme {
+            case "https", "http":
+                NSWorkspace.shared.open(url)
+            case "orbit":
+                Self.handle(url)
+            default:
+                break
+            }
+        }
+    }
+
+    static func handle(_ url: URL) {
+        let store = UsageStore.shared
+        switch url.host {
+        case "refresh":
+            Task { await store.refresh() }
+        case "settings":
+            UsageStore.openSettingsWindow()
+        case "sessions":
+            activateClaudeApp()
+        case "session":
+            let id = url.lastPathComponent
+            guard let s = store.snapshot.sessions.first(where: { $0.id == id }) else { activateClaudeApp(); return }
+            if let link = s.deepLink {
+                NSWorkspace.shared.open(link)              // opens that session in the Claude desktop app
+            } else {
+                NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: s.cwd)   // CLI session → its folder
+            }
+        default:
+            break
+        }
+    }
+
+    static func activateClaudeApp() {
+        if let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.anthropic.claudefordesktop") {
+            NSWorkspace.shared.openApplication(at: app, configuration: NSWorkspace.OpenConfiguration())
         }
     }
 }
