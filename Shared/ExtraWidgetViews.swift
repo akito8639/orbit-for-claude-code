@@ -98,7 +98,8 @@ struct SessionsWidgetView: View {
                 .padding(.leading, 12)
             }
             if let c = s.context {
-                ContextBar(context: c, height: size == .large ? 6 : 4).padding(.leading, size == .large ? 12 : 0)
+                // Aligned with the session name (dot 6pt + spacing 6pt), half as thick as before.
+                ContextBar(context: c, height: size == .large ? 3 : 2).padding(.leading, 12)
             }
         }
     }
