@@ -76,6 +76,7 @@ struct SecondaryWidgetEntryView<Content: View>: View {
     @Environment(\.widgetFamily) private var family
     @Environment(\.widgetRenderingMode) private var renderingMode
     var entry: UsageEntry
+    var alert: Bool = false          // incident: draw a warning halo inside the widget edge
     var content: (DashboardSize) -> Content
 
     private var size: DashboardSize {
@@ -89,10 +90,18 @@ struct SecondaryWidgetEntryView<Content: View>: View {
     var body: some View {
         content(size)
             .containerBackground(for: .widget) {
-                if renderingMode == .fullColor {
-                    DashboardBackground(style: entry.options.style, level: .onTrack)
-                } else {
-                    Color.clear
+                ZStack {
+                    if renderingMode == .fullColor {
+                        DashboardBackground(style: entry.options.style, level: alert ? .wellAboveTarget : .onTrack)
+                    } else {
+                        Color.clear
+                    }
+                    if alert {
+                        ContainerRelativeShape()
+                            .stroke(Palette.status(entry.snapshot.serviceStatus), lineWidth: 3)
+                            .padding(1)
+                            .shadow(color: Palette.status(entry.snapshot.serviceStatus).opacity(0.8), radius: 8)
+                    }
                 }
             }
     }
@@ -141,7 +150,7 @@ struct OrbitCoworkWidget: Widget {
 struct OrbitStatusWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "OrbitStatusWidget", provider: UsageProvider()) { entry in
-            SecondaryWidgetEntryView(entry: entry) { size in
+            SecondaryWidgetEntryView(entry: entry, alert: entry.snapshot.serviceStatus.map { !$0.isHealthy } ?? false) { size in
                 StatusWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
             }
             .widgetURL(URL(string: "https://status.claude.com")!)   // tap → the app opens it in the browser

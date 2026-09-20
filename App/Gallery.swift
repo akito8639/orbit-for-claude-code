@@ -74,10 +74,12 @@ extension Gallery {
                     HStack(alignment: .top, spacing: 20) {
                         ForEach(Array(sizes.prefix(row.1).enumerated()), id: \.offset) { _, item in
                             let (size, dim) = item
+                            let alert = row.0 == "Claude status" && (snapshot.serviceStatus.map { !$0.isHealthy } ?? false)
                             row.2(size)
                                 .padding(18)
                                 .frame(width: dim.width, height: dim.height)
-                                .background(DashboardBackground(style: opts.style, level: .onTrack))
+                                .background(DashboardBackground(style: opts.style, level: alert ? .wellAboveTarget : .onTrack))
+                                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(alert ? Palette.status(snapshot.serviceStatus) : .clear, lineWidth: 3).padding(1))
                                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                                 .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.18), lineWidth: 1))
                                 .shadow(color: .black.opacity(0.35), radius: 18, y: 10)

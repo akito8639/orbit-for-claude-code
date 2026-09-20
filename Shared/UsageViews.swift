@@ -158,11 +158,28 @@ struct Chip: View {
     }
 }
 
+/// Service-status lamp. Widgets cannot run continuous animations, so an incident is shown with a
+/// stronger glow and a halo; in the app (menu bar panel) the lamp really pulses.
 struct StatusDot: View {
     var status: ServiceStatus?
+    var pulsing: Bool = false
+    @State private var on = false
+
+    private var unhealthy: Bool { status.map { !$0.isHealthy } ?? false }
+
     var body: some View {
-        Circle().fill(Palette.status(status)).frame(width: 7, height: 7)
-            .shadow(color: Palette.status(status).opacity(0.8), radius: 3)
+        let c = Palette.status(status)
+        Circle().fill(c).frame(width: 7, height: 7)
+            .shadow(color: c.opacity(unhealthy ? 1 : 0.8), radius: unhealthy ? 6 : 3)
+            .overlay(
+                Circle().stroke(c.opacity(unhealthy ? (pulsing ? (on ? 0.9 : 0.1) : 0.6) : 0), lineWidth: 2)
+                    .frame(width: 13, height: 13)
+            )
+            .scaleEffect(pulsing && unhealthy ? (on ? 1.25 : 0.9) : 1)
+            .onAppear {
+                guard pulsing else { return }
+                withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) { on = true }
+            }
     }
 }
 
@@ -187,6 +204,7 @@ struct ExtrasRow: View {
     var options: DisplayOptions
     var compact: Bool = false
     var mono: Bool = false
+    var pulsing: Bool = false
 
     private var font: Font { mono ? .system(size: 10.5, design: .monospaced) : .system(size: 10.5, weight: .medium, design: .rounded) }
 
@@ -194,7 +212,7 @@ struct ExtrasRow: View {
         HStack(spacing: compact ? 8 : 12) {
             if options[.showServiceStatus] {
                 HStack(spacing: 4) {
-                    StatusDot(status: snapshot.serviceStatus)
+                    StatusDot(status: snapshot.serviceStatus, pulsing: pulsing)
                     if !(compact && (snapshot.serviceStatus?.isHealthy ?? false)) { Text(statusText).lineLimit(1) }
                 }
             }
@@ -521,7 +539,7 @@ struct GlassOrbitView: View {
                 }
                 Spacer(minLength: 0)
                 if !hideExtrasRow {
-                    ExtrasRow(snapshot: snapshot, options: options, compact: true)
+                    ExtrasRow(snapshot: snapshot, options: options, compact: true, pulsing: !inWidget)
                 }
             }
         }
@@ -654,7 +672,7 @@ struct PaceBarsView: View {
             }
             Spacer(minLength: 0)
             if options[.showServiceStatus] || options[.showSessions] || options[.showTodayUsage] {
-                ExtrasRow(snapshot: snapshot, options: options, compact: true)
+                ExtrasRow(snapshot: snapshot, options: options, compact: true, pulsing: !inWidget)
             }
         }
         .foregroundStyle(.white)
@@ -773,7 +791,7 @@ struct ConsoleView: View {
             }
             summary
             Spacer(minLength: 0)
-            ExtrasRow(snapshot: snapshot, options: options, compact: true, mono: true)
+            ExtrasRow(snapshot: snapshot, options: options, compact: true, mono: true, pulsing: !inWidget)
             cursor
         }
     }
