@@ -1613,6 +1613,28 @@
         }
       }
     },
+    "Show session titles instead of folder names": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セッション名があればフォルダ名の代わりに表示"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세션 제목이 있으면 폴더명 대신 표시"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有会话标题时显示标题而非文件夹名"
+          }
+        }
+      }
+    },
     "Shows Claude Code's 5-hour / weekly usage, service status and running sessions.": {
       "extractionState": "stale",
       "localizations": {

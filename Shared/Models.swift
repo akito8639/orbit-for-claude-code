@@ -211,8 +211,15 @@ struct LocalSession: Codable, Hashable, Identifiable {
     var version: String?
     var entrypoint: String?
     var context: ContextUsage? = nil
+    var name: String? = nil          // title given in the desktop app (sessions/<pid>.json "name")
 
     var projectName: String { (cwd as NSString).lastPathComponent }
+
+    /// Title when one exists and the setting allows it, otherwise the folder name.
+    func displayName(_ options: DisplayOptions) -> String {
+        if options[.preferSessionNames], let n = name?.trimmingCharacters(in: .whitespaces), !n.isEmpty { return n }
+        return projectName
+    }
 }
 
 struct LocalUsageToday: Codable, Hashable {
@@ -269,9 +276,9 @@ struct UsageSnapshot: Codable {
                                      components: ["claude.ai", "Claude Console (platform.claude.com)", "Claude API (api.anthropic.com)", "Claude Code", "Claude Cowork", "Claude for Government"].map { ServiceStatus.StatusComponent(name: $0, status: "operational") }),
         sessions: [
             LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/my-app", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli",
-                         context: ContextUsage(input: 1_200, cacheRead: 412_000, cacheCreation: 9_800, output: 900, model: "claude-fable-5-1", limit: 1_000_000, at: .now)),
+                         context: ContextUsage(input: 1_200, cacheRead: 412_000, cacheCreation: 9_800, output: 900, model: "claude-fable-5-1", limit: 1_000_000, at: .now), name: "Onboarding flow rewrite"),
             LocalSession(id: "2", pid: 2, cwd: "/Users/you/Development/website", startedAt: .now.addingTimeInterval(-4 * 3600), version: "2.1.275", entrypoint: "claude-desktop",
-                         context: ContextUsage(input: 3_400, cacheRead: 156_000, cacheCreation: 2_100, output: 400, model: "claude-sonnet-5", limit: 200_000, at: .now)),
+                         context: ContextUsage(input: 3_400, cacheRead: 156_000, cacheCreation: 2_100, output: 400, model: "claude-sonnet-5", limit: 200_000, at: .now), name: "Landing page copy"),
             LocalSession(id: "3", pid: 3, cwd: "/Users/you/Development/api-server", startedAt: .now.addingTimeInterval(-90), version: "2.1.275", entrypoint: "cli",
                          context: ContextUsage(input: 800, cacheRead: 38_000, cacheCreation: 12_000, output: 300, model: "claude-fable-5-1", limit: 1_000_000, at: .now)),
         ],

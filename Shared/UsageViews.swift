@@ -333,7 +333,7 @@ struct ExtrasDetail: View {
                     ForEach(snapshot.sessions.prefix(maxSessionRows)) { s in
                         HStack(spacing: 6) {
                             Image(systemName: "terminal").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.ok)
-                            Text(s.projectName).font(body1).lineLimit(1).truncationMode(.middle)
+                            Text(s.displayName(options)).font(body1).lineLimit(1).truncationMode(.tail)
                             Spacer(minLength: 4)
                             if let st = s.startedAt { Text(Fmt.relative(st, now: now)).font(cap).foregroundStyle(.white.opacity(0.5)).lineLimit(1).fixedSize() }
                             if let v = s.version { Text("v\(v)").font(cap).foregroundStyle(.white.opacity(0.4)).lineLimit(1).fixedSize() }

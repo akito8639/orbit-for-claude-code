@@ -41,7 +41,7 @@ Only the OAuth token Claude Code stores at login works. `claude setup-token` tok
 | Extra usage credits | same, `extra_usage` |
 | Account e-mail, plan badge (MAX 20x) | `/api/oauth/profile` + keychain item |
 | Service status, Claude Code component, incidents, per-component dots | `status.claude.com/api/v2/summary.json` |
-| Running Claude Code sessions (project, uptime, version) and each session's context window (used / limit, cached vs fresh) | `~/.claude/sessions/*.json` (pid liveness checked) + the tail of each session's transcript in `~/.claude/projects` |
+| Running Claude Code sessions (title from the desktop app or folder name, uptime, version) and each session's context window (used / limit, cached vs fresh) | `~/.claude/sessions/*.json` (pid liveness checked) + the tail of each session's transcript in `~/.claude/projects` |
 | Today's tokens (input / output / cache) and API-equivalent cost | `~/.claude/projects/**/*.jsonl` modified today, deduplicated by message id |
 
 The pace marker is the elapsed fraction of the window. Usage 10 points above it is *above target* (orange), 25 points above is *well above target* (red).

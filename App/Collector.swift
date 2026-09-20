@@ -353,7 +353,8 @@ enum LocalScanner {
             let cwd = j["cwd"] as? String ?? "?"
             out.append(LocalSession(id: sessionId, pid: pid, cwd: cwd, startedAt: started,
                                     version: j["version"] as? String, entrypoint: j["entrypoint"] as? String,
-                                    context: contextUsage(sessionId: sessionId, cwd: cwd)))
+                                    context: contextUsage(sessionId: sessionId, cwd: cwd),
+                                    name: j["name"] as? String))
         }
         return out.sorted { ($0.startedAt ?? .distantPast) > ($1.startedAt ?? .distantPast) }
     }

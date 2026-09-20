@@ -55,7 +55,7 @@ struct SessionsWidgetView: View {
                 ForEach(sessions.prefix(2)) { s in
                     HStack(spacing: 4) {
                         Circle().fill(Palette.ok).frame(width: 5, height: 5)
-                        Text(s.projectName).font(fonts.body(10)).foregroundStyle(.white.opacity(0.85)).lineLimit(1).truncationMode(.middle)
+                        Text(s.displayName(options)).font(fonts.body(10)).foregroundStyle(.white.opacity(0.85)).lineLimit(1).truncationMode(.middle)
                     }
                 }
                 if sessions.count > 2 { Text(L("+%d more", sessions.count - 2)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.5)) }
@@ -77,7 +77,7 @@ struct SessionsWidgetView: View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
                 Circle().fill(Palette.ok).frame(width: 6, height: 6).shadow(color: Palette.ok.opacity(0.7), radius: 2)
-                Text(s.projectName).font(fonts.body(11.5, .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.middle)
+                Text(s.displayName(options)).font(fonts.body(11.5, .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.tail)
                 Spacer(minLength: 4)
                 if size == .medium, let c = s.context {
                     Text("\(c.percent)%").font(fonts.cap()).foregroundStyle(.white.opacity(0.75)).monospacedDigit().lineLimit(1).fixedSize()
