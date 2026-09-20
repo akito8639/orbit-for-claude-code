@@ -4,7 +4,7 @@ A macOS menu bar app and WidgetKit widget for **Claude Code** usage: the 5-hour 
 
 ![Widget gallery](docs/gallery.png)
 
-Four widgets in one app, so you can place the ones you need side by side: **Usage** (limits and pace), **Sessions** (running Claude Code sessions), **Claude status** (status.claude.com by component) and **Today** (local tokens and cost by model).
+Five widgets in one app, so you can place the ones you need side by side: **Usage** (limits and pace), **Sessions** (running Claude Code sessions with live activity), **Cowork** (recent Cowork sessions from the desktop app), **Claude status** (status.claude.com by component) and **Today** (local tokens and cost by model).
 
 ![Secondary widgets](docs/gallery-extras.png)
 
@@ -42,6 +42,7 @@ Only the OAuth token Claude Code stores at login works. `claude setup-token` tok
 | Account e-mail, plan badge (MAX 20x) | `/api/oauth/profile` + keychain item |
 | Service status, Claude Code component, incidents, per-component dots | `status.claude.com/api/v2/summary.json` |
 | Running Claude Code sessions: live activity lamp (working / input needed / permission / idle, same source as the desktop app), title or folder name, uptime, version, and each session's context window (used / limit, cached vs fresh) | `~/.claude/sessions/*.json` (pid liveness checked) + the tail of each session's transcript in `~/.claude/projects` |
+| Recent Cowork sessions (title, last activity, model) | `~/Library/Application Support/Claude/local-agent-mode-sessions` |
 | Today's tokens (input / output / cache) and API-equivalent cost | `~/.claude/projects/**/*.jsonl` modified today, deduplicated by message id |
 
 Tapping a widget: **Usage** opens the usage page on claude.ai, **Sessions** rows open that session in the Claude desktop app (`claude://code/continue?session=…`) or, for terminal sessions, the project folder in Finder, **Claude status** opens status.claude.com, **Today** refreshes immediately.

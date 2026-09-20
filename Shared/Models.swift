@@ -244,6 +244,16 @@ struct LocalSession: Codable, Hashable, Identifiable {
     }
 }
 
+/// A Cowork session recorded by the Claude desktop app (local-agent-mode-sessions/<account>/<org>/local_*.json).
+struct CoworkSession: Codable, Hashable, Identifiable {
+    var id: String
+    var title: String
+    var createdAt: Date?
+    var lastActivityAt: Date?
+    var model: String?
+    var isArchived: Bool
+}
+
 struct LocalUsageToday: Codable, Hashable {
     var inputTokens: Int
     var outputTokens: Int
@@ -277,6 +287,7 @@ struct UsageSnapshot: Codable {
     var errorMessage: String?
     var rawUsageJSON: String? = nil   // last raw usage response, for diagnostics (`ClaudeUsage --raw`)
     var breakdown: [BreakdownRow]? = nil   // seven_day_breakdown: share of the weekly usage per surface
+    var coworkSessions: [CoworkSession]? = nil
 
     struct BreakdownRow: Codable, Hashable, Identifiable {
         var key: String
@@ -308,7 +319,12 @@ struct UsageSnapshot: Codable {
                                byModel: ["claude-fable-5-1": 2_600_000, "claude-sonnet-5": 700_000, "claude-haiku-4-5-20251001": 168_000]),
         tokenState: .ok,
         errorMessage: nil,
-        breakdown: [BreakdownRow(key: "claude_code", displayName: "Claude Code", percent: 92), BreakdownRow(key: "chat", displayName: "Chat", percent: 6), BreakdownRow(key: "cowork", displayName: "Cowork", percent: 2)]
+        breakdown: [BreakdownRow(key: "claude_code", displayName: "Claude Code", percent: 92), BreakdownRow(key: "chat", displayName: "Chat", percent: 6), BreakdownRow(key: "cowork", displayName: "Cowork", percent: 2)],
+        coworkSessions: [
+            CoworkSession(id: "c1", title: "Quarterly report draft", createdAt: .now.addingTimeInterval(-7200), lastActivityAt: .now.addingTimeInterval(-600), model: "claude-fable-5-1", isArchived: false),
+            CoworkSession(id: "c2", title: "Photo dialogue feature design", createdAt: .now.addingTimeInterval(-3 * 86400), lastActivityAt: .now.addingTimeInterval(-86400), model: "claude-sonnet-5", isArchived: false),
+            CoworkSession(id: "c3", title: "Contract review", createdAt: .now.addingTimeInterval(-9 * 86400), lastActivityAt: .now.addingTimeInterval(-8 * 86400), model: "claude-fable-5-1", isArchived: false),
+        ]
     )
 
     /// The window with the worst level (ties broken by utilization).

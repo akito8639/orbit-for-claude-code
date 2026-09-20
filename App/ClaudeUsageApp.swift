@@ -125,7 +125,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { await store.refresh() }
         case "settings":
             UsageStore.openSettingsWindow()
-        case "sessions":
+        case "sessions", "cowork":
             activateClaudeApp()
         case "session":
             let id = url.lastPathComponent

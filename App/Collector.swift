@@ -361,6 +361,28 @@ enum LocalScanner {
         return out.sorted { ($0.startedAt ?? .distantPast) > ($1.startedAt ?? .distantPast) }
     }
 
+    /// Cowork sessions from the desktop app: ~/Library/Application Support/Claude/local-agent-mode-sessions/<account>/<org>/local_*.json
+    static func coworkSessions(limit: Int = 12) -> [CoworkSession] {
+        let root = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Claude/local-agent-mode-sessions")
+        guard let en = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return [] }
+        var out: [CoworkSession] = []
+        for case let url as URL in en {
+            guard url.pathExtension == "json", url.lastPathComponent.hasPrefix("local_"),
+                  url.pathComponents.count - root.pathComponents.count == 3,   // <account>/<org>/local_x.json
+                  let data = try? Data(contentsOf: url),
+                  let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let title = j["title"] as? String else { continue }
+            func date(_ k: String) -> Date? { (j[k] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) } }
+            out.append(CoworkSession(id: url.deletingPathExtension().lastPathComponent, title: title,
+                                     createdAt: date("createdAt"), lastActivityAt: date("lastActivityAt"),
+                                     model: j["model"] as? String, isArchived: j["isArchived"] as? Bool ?? false))
+        }
+        return Array(out.filter { !$0.isArchived }
+            .sorted { ($0.lastActivityAt ?? $0.createdAt ?? .distantPast) > ($1.lastActivityAt ?? $1.createdAt ?? .distantPast) }
+            .prefix(limit))
+    }
+
     /// Claude Code stores transcripts at ~/.claude/projects/<cwd with non-alphanumerics replaced by "-">/<sessionId>.jsonl
     static func transcriptURL(sessionId: String, cwd: String) -> URL? {
         let projects = claudeDir.appendingPathComponent("projects")
@@ -482,6 +504,7 @@ enum Collector {
         let sessionsTask = Task.detached(priority: .utility) { options[.showSessions] ? LocalScanner.runningSessions() : [] }
         let todayTask = Task.detached(priority: .utility) { options[.showTodayUsage] ? LocalScanner.todayUsage() : nil }
         let credsTask = Task.detached(priority: .utility) { CredentialStore.loadBest() }
+        let coworkTask = Task.detached(priority: .utility) { options[.showCowork] ? LocalScanner.coworkSessions() : [] }
 
         let detected = await credsTask.value
         var creds = ManualTokenStore.credentials() ?? detected
@@ -549,6 +572,7 @@ enum Collector {
         snap.serviceStatus = await status
         snap.sessions = await sessionsTask.value
         snap.today = await todayTask.value
+        snap.coworkSessions = await coworkTask.value
         snap.errorMessage = errors.isEmpty ? nil : errors.joined(separator: " · ")
         snap.fetchedAt = .now
         return Report(snapshot: snap, credentials: creds)

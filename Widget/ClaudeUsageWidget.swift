@@ -124,6 +124,20 @@ struct OrbitSessionsWidget: Widget {
     }
 }
 
+struct OrbitCoworkWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "OrbitCoworkWidget", provider: UsageProvider()) { entry in
+            SecondaryWidgetEntryView(entry: entry) { size in
+                CoworkWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
+            }
+            .widgetURL(URL(string: "orbit://cowork")!)   // tap → bring the Claude app forward
+        }
+        .configurationDisplayName(Text(L("Cowork")))
+        .description(Text(L("Recent Cowork sessions from the Claude desktop app.")))
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
 struct OrbitStatusWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "OrbitStatusWidget", provider: UsageProvider()) { entry in
@@ -157,6 +171,7 @@ struct OrbitWidgets: WidgetBundle {
     var body: some Widget {
         OrbitUsageWidget()
         OrbitSessionsWidget()
+        OrbitCoworkWidget()
         OrbitStatusWidget()
         OrbitTodayWidget()
     }

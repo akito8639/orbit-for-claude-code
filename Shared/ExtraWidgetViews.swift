@@ -78,20 +78,22 @@ struct SessionsWidgetView: View {
                 Text(L("No running sessions")).font(fonts.body(11)).foregroundStyle(.white.opacity(0.6))
                 Spacer(minLength: 0)
             } else if size == .small {
+                // Counts only: total, working, waiting for you, idle.
+                let working = sessions.filter { $0.activity == .working }.count
+                let waiting = sessions.filter { $0.activity == .needsInput || $0.activity == .permission }.count
+                let idle = sessions.filter { $0.activity == .idle }.count
                 Spacer(minLength: 0)
                 HStack(alignment: .lastTextBaseline, spacing: 4) {
-                    Text("\(sessions.count)").font(fonts.body(34, .bold)).monospacedDigit()
+                    Text("\(sessions.count)").font(fonts.body(36, .bold)).monospacedDigit()
                     Text(L(sessions.count == 1 ? "session" : "sessions")).font(fonts.cap(10)).foregroundStyle(.white.opacity(0.6))
                 }
                 .foregroundStyle(.white)
-                ForEach(sessions.prefix(2)) { s in
-                    HStack(spacing: 4) {
-                        ActivityLamp(activity: s.activity, size: 5)
-                        Text(s.displayName(options)).font(fonts.body(10)).foregroundStyle(.white.opacity(0.85)).lineLimit(1).truncationMode(.middle)
-                    }
-                }
-                if sessions.count > 2 { Text(L("+%d more", sessions.count - 2)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.5)) }
                 Spacer(minLength: 0)
+                VStack(alignment: .leading, spacing: 3) {
+                    countRow(.working, working)
+                    countRow(.needsInput, waiting)
+                    countRow(.idle, idle)
+                }
             } else {
                 let maxRows = size == .large ? 6 : 4
                 // Each row is a link: the app opens that session in the Claude desktop app, or its folder in Finder.
@@ -109,6 +111,15 @@ struct SessionsWidgetView: View {
                         .font(fonts.cap()).foregroundStyle(.white.opacity(0.4)).lineLimit(1)
                 }
             }
+        }
+    }
+
+    private func countRow(_ a: LocalSession.Activity, _ n: Int) -> some View {
+        HStack(spacing: 5) {
+            ActivityLamp(activity: a, size: 6)
+            Text(a == .needsInput ? L("waiting for you") : (ActivityStyle.label(a) ?? "")).font(fonts.cap(10)).foregroundStyle(.white.opacity(n > 0 ? 0.85 : 0.45)).lineLimit(1)
+            Spacer(minLength: 2)
+            Text("\(n)").font(fonts.body(12, .bold)).monospacedDigit().foregroundStyle(n > 0 ? ActivityStyle.color(a) : .white.opacity(0.45))
         }
     }
 
@@ -175,6 +186,56 @@ struct ContextBar: View {
 
     private func seg(_ color: Color, _ width: CGFloat) -> some View {
         Rectangle().fill(color).frame(width: max(0, width))
+    }
+}
+
+// MARK: - Cowork
+
+struct CoworkWidgetView: View {
+    var snapshot: UsageSnapshot
+    var options: DisplayOptions
+    var size: DashboardSize
+    var now: Date = .now
+
+    private var fonts: StyleFonts { StyleFonts(options.style) }
+    private var sessions: [CoworkSession] { snapshot.coworkSessions ?? [] }
+    private var recent: [CoworkSession] { sessions.filter { ($0.lastActivityAt ?? .distantPast) > now.addingTimeInterval(-86400) } }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
+            WidgetHeader(icon: "person.2", title: L("Cowork"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
+            if sessions.isEmpty {
+                Spacer(minLength: 0)
+                Text(L("No Cowork sessions")).font(fonts.body(11)).foregroundStyle(.white.opacity(0.6))
+                Spacer(minLength: 0)
+            } else if size == .small {
+                Spacer(minLength: 0)
+                HStack(alignment: .lastTextBaseline, spacing: 4) {
+                    Text("\(recent.count)").font(fonts.body(36, .bold)).monospacedDigit()
+                    Text(L("today")).font(fonts.cap(10)).foregroundStyle(.white.opacity(0.6))
+                }
+                .foregroundStyle(.white)
+                Spacer(minLength: 0)
+                if let s = sessions.first {
+                    Text(s.title).font(fonts.body(10, .semibold)).foregroundStyle(.white.opacity(0.9)).lineLimit(2)
+                    if let t = s.lastActivityAt { Text(Fmt.relative(t, now: now)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.5)) }
+                }
+            } else {
+                let maxRows = size == .large ? 10 : 4
+                ForEach(sessions.prefix(maxRows)) { s in
+                    HStack(spacing: 6) {
+                        Circle().fill(recent.contains(where: { $0.id == s.id }) ? Palette.ok : Color.white.opacity(0.3)).frame(width: 6, height: 6)
+                        Text(s.title).font(fonts.body(11.5, .semibold)).foregroundStyle(.white).lineLimit(1)
+                        Spacer(minLength: 4)
+                        if size == .large, let m = s.model { Text(TodayWidgetView.shortModel(m)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.45)).lineLimit(1) }
+                        if let t = s.lastActivityAt { Text(Fmt.relative(t, now: now)).font(fonts.cap()).foregroundStyle(.white.opacity(0.55)).lineLimit(1).fixedSize() }
+                    }
+                }
+                if sessions.count > maxRows { Text(L("+%d more", sessions.count - maxRows)).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)) }
+                Spacer(minLength: 0)
+                Text(L("%d sessions", sessions.count) + " · " + L("%d active today", recent.count)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.4)).lineLimit(1)
+            }
+        }
     }
 }
 

@@ -42,6 +42,7 @@ enum SettingKey: String, CaseIterable {
     case showResetTimes = "show_reset_times"
     case forceEnglishWidgets = "force_english_widgets"
     case preferSessionNames = "prefer_session_names"
+    case showCowork = "show_cowork"
     case autoRefreshToken = "auto_refresh_token"
 
     var defaultValue: Bool {
@@ -68,6 +69,7 @@ enum SettingKey: String, CaseIterable {
         case .showResetTimes: return L("Reset times")
         case .forceEnglishWidgets: return L("Widgets always in English")
         case .preferSessionNames: return L("Show session titles instead of folder names")
+        case .showCowork: return L("Cowork sessions (desktop app)")
         case .autoRefreshToken: return L("Refresh expired token automatically")
         }
     }
@@ -80,7 +82,7 @@ enum SettingKey: String, CaseIterable {
             return L("Account (OAuth profile API)")
         case .showServiceStatus, .showAllComponents:
             return L("Service status")
-        case .showSessions, .showTodayUsage, .preferSessionNames:
+        case .showSessions, .showTodayUsage, .preferSessionNames, .showCowork:
             return L("Local (~/.claude)")
         case .forceEnglishWidgets:
             return L("Display")
