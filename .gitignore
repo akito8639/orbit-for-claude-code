@@ -1,0 +1,9 @@
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+Config.local.xcconfig
+.DS_Store
+*.png
+!docs/gallery.png
+docs/row_*.jpg
