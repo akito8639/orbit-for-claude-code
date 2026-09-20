@@ -4,6 +4,10 @@ A macOS menu bar app and WidgetKit widget for **Claude Code** usage: the 5-hour 
 
 ![Widget gallery](docs/gallery.png)
 
+Four widgets in one app, so you can place the ones you need side by side: **Usage** (limits and pace), **Sessions** (running Claude Code sessions), **Claude status** (status.claude.com by component) and **Today** (local tokens and cost by model).
+
+![Secondary widgets](docs/gallery-extras.png)
+
 > **Unofficial.** Not affiliated with Anthropic. It reads Claude Code's own OAuth token from your keychain and calls the same undocumented endpoints Claude Code uses for `/usage`; those can change without notice.
 
 ## Requirements
@@ -22,8 +26,8 @@ Or download `Orbit-for-Claude-Code-<version>.zip` from Releases, unzip and move 
 
 1. Launch Orbit. It lives in the menu bar as `✱ 45%`.
 2. If it says *token expired*, run `claude` once in a terminal and `/login`. If `ANTHROPIC_API_KEY` is set in your shell, run `env -u ANTHROPIC_API_KEY claude` instead, otherwise the CLI uses the API key and never refreshes the OAuth token.
-3. Right-click the desktop → **Edit Widgets** → search *Orbit for Claude Code* → add Small, Medium or Large.
-4. Menu bar ✱ → gear opens Settings: toggles for every piece of information, the three designs, refresh interval. The UI follows the system language (English, 日本語, 简体中文, 한국어).
+3. Right-click the desktop → **Edit Widgets** → search *Orbit* → add any of the four widgets in Small, Medium or Large.
+4. Menu bar ✱ → gear opens Settings: toggles for every piece of information, the three designs, refresh interval. The UI follows the system language (English, 日本語, 简体中文, 한국어); a toggle keeps the widgets in English regardless.
 
 Only the OAuth token Claude Code stores at login works. `claude setup-token` tokens lack the `user:profile` scope (403) and API keys (`sk-ant-api…`) cannot read plan limits.
 
@@ -101,5 +105,6 @@ Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別週
 - インストール: 上記の `brew install --cask orbit-for-claude-code`、または Releases の zip
 - 「token expired」が出たら、ターミナルで `claude` を一度起動（`ANTHROPIC_API_KEY` を設定している場合は `env -u ANTHROPIC_API_KEY claude`）
 - `claude setup-token` のトークンと API キーは使えません（スコープ不足 / プラン上限は読めない）
-- 表示項目は設定ですべて ON / OFF できます。UI はシステム言語に追従（英語 / 日本語 / 簡体字中国語 / 韓国語）
+- ウィジェットは 4 種類（Usage / Sessions / Claude status / Today）。必要なものを並べて置けます
+- 表示項目は設定ですべて ON / OFF できます。UI はシステム言語に追従（英語 / 日本語 / 簡体字中国語 / 韓国語）。ウィジェットだけ英語に固定する設定あり
 - 非公式プロジェクトで、Anthropic とは無関係です
