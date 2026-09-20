@@ -295,6 +295,7 @@ struct ExtrasDetail: View {
     var mono: Bool = false
     var now: Date = .now
     var maxSessionRows: Int = 1   // the usage widget shows only the newest session; the Sessions widget lists them all
+    var sessionsCompact: Bool = false   // true: one line (count + activity lamps), no session row
 
     private var body1: Font { mono ? .system(size: 11, design: .monospaced) : .system(size: 11, weight: .medium, design: .rounded) }
     private var cap: Font { mono ? .system(size: 9.5, design: .monospaced) : .system(size: 9.5, weight: .semibold, design: .rounded) }
@@ -323,7 +324,14 @@ struct ExtrasDetail: View {
                     BreakdownBar(rows: rows, mono: mono)
                 }
             }
-            if options[.showSessions] {
+            if options[.showSessions], sessionsCompact {
+                HStack(spacing: 6) {
+                    Text(L("RUNNING SESSIONS") + " · \(snapshot.sessions.count)").font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
+                    HStack(spacing: 3) {
+                        ForEach(snapshot.sessions.prefix(8)) { s in ActivityLamp(activity: s.activity, size: 5) }
+                    }
+                }
+            } else if options[.showSessions] {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L("RUNNING SESSIONS") + " · \(snapshot.sessions.count)").font(cap).tracking(1).foregroundStyle(.white.opacity(0.5))
                     if snapshot.sessions.isEmpty {
@@ -518,7 +526,7 @@ struct GlassOrbitView: View {
         VStack(alignment: .leading, spacing: 10) {
             medium.frame(height: 128).padding(.top, 4)
             Divider().overlay(Color.white.opacity(0.15))
-            ExtrasDetail(snapshot: snapshot, options: options, now: now)
+            ExtrasDetail(snapshot: snapshot, options: options, now: now, sessionsCompact: true)
             Spacer(minLength: 0)
         }
         .foregroundStyle(.white)
@@ -642,7 +650,7 @@ struct PaceBarsView: View {
                 row(UsageWindow(id: "extra", kind: .other, utilization: u, resetsAt: nil), barHeight: 12)
             }
             Divider().overlay(Color.white.opacity(0.15))
-            ExtrasDetail(snapshot: snapshot, options: options, now: now)
+            ExtrasDetail(snapshot: snapshot, options: options, now: now, sessionsCompact: true)
             Spacer(minLength: 0)
         }
         .foregroundStyle(.white)
