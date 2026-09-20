@@ -241,7 +241,7 @@ struct UsageSnapshot: Codable {
         extraUsage: ExtraUsage(isEnabled: false, monthlyLimit: nil, usedCredits: nil, utilization: nil),
         profile: AccountProfile(email: "you@example.com", displayName: nil, organizationName: nil, subscriptionType: "max", rateLimitTier: "default_claude_max_20x"),
         serviceStatus: ServiceStatus(indicator: "none", description: "All Systems Operational", claudeCodeStatus: "operational", unresolvedIncidents: [], updatedAt: .now),
-        sessions: [LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/SenseLit", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli")],
+        sessions: [LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/my-app", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli")],
         today: LocalUsageToday(inputTokens: 120_000, outputTokens: 38_000, cacheCreationTokens: 410_000, cacheReadTokens: 2_900_000, messages: 212, estimatedCostUSD: 14.2, byModel: ["claude-opus-5": 3_100_000]),
         tokenState: .ok,
         errorMessage: nil,
