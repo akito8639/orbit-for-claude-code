@@ -271,7 +271,7 @@ struct BreakdownBar: View {
                 }
                 .clipShape(Capsule())
             }
-            .frame(height: 6)
+            .frame(height: 3)
             HStack(spacing: 8) {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
                     if r.percent > 0 {
