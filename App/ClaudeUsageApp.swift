@@ -115,6 +115,14 @@ struct ClaudeUsageApp: App {
             }
             exit(0)
         }
+        if let i = args.firstIndex(of: "--render-icon"), i + 1 < args.count {
+            Gallery.renderIcon(to: URL(fileURLWithPath: args[i + 1]))
+            exit(0)
+        }
+        if let i = args.firstIndex(of: "--render-icon-bundle"), i + 1 < args.count {
+            Gallery.renderIconBundle(to: URL(fileURLWithPath: args[i + 1]))
+            exit(0)
+        }
         if args.contains("--raw") {
             print(SnapshotStore.load()?.rawUsageJSON ?? "(no usage response stored yet)")
             exit(0)

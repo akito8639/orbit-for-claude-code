@@ -19,6 +19,7 @@
 		B00000000000000000000010 /* ClaudeUsageWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000008 /* ClaudeUsageWidget.swift */; };
 		B00000000000000000000011 /* OrbitWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* OrbitWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B00000000000000000000012 /* Gallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* Gallery.swift */; };
+		B00000000000000000000013 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000015 /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +61,7 @@
 		F00000000000000000000012 /* OrbitWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OrbitWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F00000000000000000000013 /* Gallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gallery.swift; sourceTree = "<group>"; };
 		F00000000000000000000014 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		F00000000000000000000015 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +119,7 @@
 				F00000000000000000000005 /* Collector.swift */,
 				F00000000000000000000006 /* SettingsView.swift */,
 				F00000000000000000000013 /* Gallery.swift */,
+				F00000000000000000000015 /* AppIcon.icon */,
 				F00000000000000000000007 /* Orbit.entitlements */,
 			);
 			path = App;
@@ -141,6 +144,7 @@
 			buildPhases = (
 				S00000000000000000000001 /* Sources */,
 				S00000000000000000000003 /* Frameworks */,
+				S00000000000000000000007 /* Resources */,
 				S00000000000000000000004 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -206,6 +210,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		S00000000000000000000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00000000000000000000013 /* AppIcon.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		S00000000000000000000001 /* Sources */ = {
@@ -307,6 +322,7 @@
 		C00000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/Orbit.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -330,6 +346,7 @@
 		C00000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/Orbit.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
