@@ -242,9 +242,15 @@ struct UsageSnapshot: Codable {
         ],
         extraUsage: ExtraUsage(isEnabled: false, monthlyLimit: nil, usedCredits: nil, utilization: nil),
         profile: AccountProfile(email: "you@example.com", displayName: nil, organizationName: nil, subscriptionType: "max", rateLimitTier: "default_claude_max_20x"),
-        serviceStatus: ServiceStatus(indicator: "none", description: "All Systems Operational", claudeCodeStatus: "operational", unresolvedIncidents: [], updatedAt: .now),
-        sessions: [LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/my-app", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli")],
-        today: LocalUsageToday(inputTokens: 120_000, outputTokens: 38_000, cacheCreationTokens: 410_000, cacheReadTokens: 2_900_000, messages: 212, estimatedCostUSD: 14.2, byModel: ["claude-opus-5": 3_100_000]),
+        serviceStatus: ServiceStatus(indicator: "none", description: "All Systems Operational", claudeCodeStatus: "operational", unresolvedIncidents: [], updatedAt: .now,
+                                     components: ["claude.ai", "Claude Console (platform.claude.com)", "Claude API (api.anthropic.com)", "Claude Code", "Claude Cowork", "Claude for Government"].map { ServiceStatus.StatusComponent(name: $0, status: "operational") }),
+        sessions: [
+            LocalSession(id: "1", pid: 1, cwd: "/Users/you/Development/my-app", startedAt: .now.addingTimeInterval(-1800), version: "2.1.275", entrypoint: "cli"),
+            LocalSession(id: "2", pid: 2, cwd: "/Users/you/Development/website", startedAt: .now.addingTimeInterval(-4 * 3600), version: "2.1.275", entrypoint: "claude-desktop"),
+            LocalSession(id: "3", pid: 3, cwd: "/Users/you/Development/api-server", startedAt: .now.addingTimeInterval(-90), version: "2.1.275", entrypoint: "cli"),
+        ],
+        today: LocalUsageToday(inputTokens: 120_000, outputTokens: 38_000, cacheCreationTokens: 410_000, cacheReadTokens: 2_900_000, messages: 212, estimatedCostUSD: 14.2,
+                               byModel: ["claude-fable-5-1": 2_600_000, "claude-sonnet-5": 700_000, "claude-haiku-4-5-20251001": 168_000]),
         tokenState: .ok,
         errorMessage: nil,
         breakdown: [BreakdownRow(key: "claude_code", displayName: "Claude Code", percent: 92), BreakdownRow(key: "chat", displayName: "Chat", percent: 6), BreakdownRow(key: "cowork", displayName: "Cowork", percent: 2)]
@@ -294,7 +300,7 @@ enum Fmt {
         guard let date else { return "—" }
         let cal = Calendar.current
         let df = DateFormatter()
-        df.locale = Locale.current
+        df.locale = L10n.locale
         if cal.isDate(date, inSameDayAs: now) {
             df.dateFormat = "HH:mm"
         } else if date.timeIntervalSince(now) < 6 * 86400 {
@@ -311,6 +317,14 @@ enum Fmt {
         if s < 3600 { return L("%dm ago", s / 60) }
         if s < 86400 { return L("%dh ago", s / 3600) }
         return L("%dd ago", s / 86400)
+    }
+
+    /// "12m", "1h 05m", "2d 3h"
+    static func duration(_ t: TimeInterval) -> String {
+        let s = max(0, Int(t))
+        if s < 3600 { return "\(s / 60)m" }
+        if s < 86400 { return String(format: "%dh %02dm", s / 3600, (s % 3600) / 60) }
+        return "\(s / 86400)d \((s % 86400) / 3600)h"
     }
 
     static func tokens(_ n: Int) -> String {

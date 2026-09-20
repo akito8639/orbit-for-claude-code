@@ -55,6 +55,48 @@ enum Gallery {
     }
 }
 
+// MARK: - Secondary widgets gallery
+
+extension Gallery {
+    @MainActor
+    static func renderExtras(to url: URL, snapshot: UsageSnapshot) {
+        let opts = AppSettings.snapshot()
+        let rows: [(String, (DashboardSize) -> AnyView)] = [
+            ("Sessions", { AnyView(SessionsWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
+            ("Claude status", { AnyView(StatusWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
+            ("Today", { AnyView(TodayWidgetView(snapshot: snapshot, options: opts, size: $0)) }),
+        ]
+        let view = VStack(alignment: .leading, spacing: 28) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(row.0).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(.white)
+                    HStack(alignment: .top, spacing: 20) {
+                        ForEach(Array(sizes.enumerated()), id: \.offset) { _, item in
+                            let (size, dim) = item
+                            row.1(size)
+                                .padding(18)
+                                .frame(width: dim.width, height: dim.height)
+                                .background(DashboardBackground(style: opts.style, level: .onTrack))
+                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.18), lineWidth: 1))
+                                .shadow(color: .black.opacity(0.35), radius: 18, y: 10)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(36)
+        .background(LinearGradient(colors: [Color(red: 0.12, green: 0.55, blue: 0.75), Color(red: 0.46, green: 0.32, blue: 0.80), Color(red: 0.95, green: 0.55, blue: 0.40)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .environment(\.colorScheme, .dark)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        guard let img = renderer.nsImage, let tiff = img.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) else { return }
+        try? png.write(to: url)
+        print("wrote \(url.path)")
+    }
+}
+
 // MARK: - App icon
 
 /// The app icon: two orbits (week outside, 5h inside) with a pace tick and a "planet" at the head of the outer orbit.

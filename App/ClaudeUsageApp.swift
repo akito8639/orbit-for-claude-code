@@ -115,6 +115,11 @@ struct ClaudeUsageApp: App {
             }
             exit(0)
         }
+        if let i = args.firstIndex(of: "--render-extras"), i + 1 < args.count {
+            let snap = args.contains("--live") ? (SnapshotStore.load() ?? .placeholder) : .placeholder
+            Gallery.renderExtras(to: URL(fileURLWithPath: args[i + 1]), snapshot: snap)
+            exit(0)
+        }
         if let i = args.firstIndex(of: "--render-icon"), i + 1 < args.count {
             Gallery.renderIcon(to: URL(fileURLWithPath: args[i + 1]))
             exit(0)

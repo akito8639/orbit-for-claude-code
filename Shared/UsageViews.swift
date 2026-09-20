@@ -294,7 +294,7 @@ struct ExtrasDetail: View {
     var options: DisplayOptions
     var mono: Bool = false
     var now: Date = .now
-    var maxSessionRows: Int = 2
+    var maxSessionRows: Int = 1   // the usage widget shows only the newest session; the Sessions widget lists them all
 
     private var body1: Font { mono ? .system(size: 11, design: .monospaced) : .system(size: 11, weight: .medium, design: .rounded) }
     private var cap: Font { mono ? .system(size: 9.5, design: .monospaced) : .system(size: 9.5, weight: .semibold, design: .rounded) }
@@ -339,9 +339,7 @@ struct ExtrasDetail: View {
                             if let v = s.version { Text("v\(v)").font(cap).foregroundStyle(.white.opacity(0.4)).lineLimit(1).fixedSize() }
                         }
                     }
-                    if snapshot.sessions.count > maxSessionRows {
-                        Text(L("+%d more", snapshot.sessions.count - maxSessionRows)).font(cap).foregroundStyle(.white.opacity(0.5))
-                    }
+
                 }
             }
             if options[.showTodayUsage], let t = snapshot.today {

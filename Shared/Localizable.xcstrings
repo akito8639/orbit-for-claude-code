@@ -321,6 +321,28 @@
         }
       }
     },
+    "All systems operational": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべて正常稼働"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 시스템 정상"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有系统运行正常"
+          }
+        }
+      }
+    },
     "Authentication": {
       "extractionState": "stale",
       "localizations": {
@@ -417,6 +439,28 @@
         }
       }
     },
+    "Claude Code v%@": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code v%@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code v%@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code v%@"
+          }
+        }
+      }
+    },
     "Claude service status (status.claude.com)": {
       "extractionState": "stale",
       "localizations": {
@@ -436,6 +480,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Claude 服务状态 (status.claude.com)"
+          }
+        }
+      }
+    },
+    "Claude status": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 稼働状況"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 상태"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 状态"
           }
         }
       }
@@ -624,6 +690,28 @@
         }
       }
     },
+    "From ~/.claude logs · estimate at API prices": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~/.claude のログから · API 単価での概算"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~/.claude 로그 기준 · API 단가 환산 추정"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来自 ~/.claude 日志 · 按 API 价格估算"
+          }
+        }
+      }
+    },
     "Limit reached": {
       "extractionState": "stale",
       "localizations": {
@@ -735,6 +823,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "无数据"
+          }
+        }
+      }
+    },
+    "No running sessions": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "起動中のセッションはありません"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실행 중인 세션 없음"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有运行中的会话"
+          }
+        }
+      }
+    },
+    "No unresolved incidents": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未解決のインシデントはありません"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "미해결 인시던트 없음"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有未解决的事件"
+          }
+        }
+      }
+    },
+    "No usage yet today": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の使用はまだありません"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 사용량 없음"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天还没有用量"
           }
         }
       }
@@ -1134,6 +1288,28 @@
         }
       }
     },
+    "Running Claude Code sessions: project, uptime and where they were started.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "起動中の Claude Code セッション: プロジェクト、経過時間、起動元。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실행 중인 Claude Code 세션: 프로젝트, 가동 시간, 시작 위치."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行中的 Claude Code 会话：项目、运行时长和启动来源。"
+          }
+        }
+      }
+    },
     "Save and fetch": {
       "extractionState": "stale",
       "localizations": {
@@ -1249,6 +1425,50 @@
         }
       }
     },
+    "Service status from status.claude.com: overall, per component, and open incidents.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "status.claude.com の稼働状況: 全体、コンポーネント別、未解決インシデント。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "status.claude.com의 서비스 상태: 전체, 구성 요소별, 미해결 인시던트."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来自 status.claude.com 的服务状态：整体、各组件及未解决事件。"
+          }
+        }
+      }
+    },
+    "Sessions": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セッション"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세션"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会话"
+          }
+        }
+      }
+    },
     "Show other windows the API returns": {
       "extractionState": "stale",
       "localizations": {
@@ -1291,6 +1511,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "显示 Claude Code 的 5 小时 / 每周用量、服务状态和运行中的会话。"
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稼働状況"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상태"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "状态"
           }
         }
       }
@@ -1341,6 +1583,28 @@
         }
       }
     },
+    "Today": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日"
+          }
+        }
+      }
+    },
     "Today's tokens / API-equivalent cost": {
       "extractionState": "stale",
       "localizations": {
@@ -1364,6 +1628,28 @@
         }
       }
     },
+    "Today's tokens and API-equivalent cost from local Claude Code logs, by model.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ローカルの Claude Code ログから、今日のトークン量と API 換算コストをモデル別に表示。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로컬 Claude Code 로그 기준 오늘의 토큰과 API 환산 비용을 모델별로 표시."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来自本地 Claude Code 日志的今日 Token 用量与等效 API 费用（按模型）。"
+          }
+        }
+      }
+    },
     "Token refresh": {
       "extractionState": "stale",
       "localizations": {
@@ -1383,6 +1669,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "令牌刷新"
+          }
+        }
+      }
+    },
+    "Usage": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用量"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용량"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用量"
           }
         }
       }
@@ -1617,6 +1925,28 @@
         }
       }
     },
+    "Widgets always in English": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィジェットを常に英語で表示"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "위젯을 항상 영어로 표시"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小组件始终使用英文"
+          }
+        }
+      }
+    },
     "[%@]": {
       "comment": "A badge indicating the user's active plan. The text is the name of the plan.",
       "isCommentAutoGenerated": true
@@ -1644,9 +1974,97 @@
         }
       }
     },
+    "cache hit": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュ命中"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캐시 적중"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缓存命中"
+          }
+        }
+      }
+    },
+    "cache write": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュ書込"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캐시 쓰기"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缓存写入"
+          }
+        }
+      }
+    },
     "claude": {
       "comment": "The name of the app.",
       "isCommentAutoGenerated": true
+    },
+    "cli": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI"
+          }
+        }
+      }
+    },
+    "desktop": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デスクトップ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "데스크탑"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面"
+          }
+        }
+      }
     },
     "extra": {
       "extractionState": "stale",
@@ -1874,6 +2292,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "运行正常"
+          }
+        }
+      }
+    },
+    "session": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セッション"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세션"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "个会话"
+          }
+        }
+      }
+    },
+    "sessions": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セッション"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세션"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "个会话"
           }
         }
       }

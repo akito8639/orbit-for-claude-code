@@ -24,6 +24,8 @@
 		B00000000000000000000015 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000016 /* Localizable.xcstrings */; };
 		B00000000000000000000016 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* L10n.swift */; };
 		B00000000000000000000017 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* L10n.swift */; };
+		B00000000000000000000018 /* ExtraWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* ExtraWidgetViews.swift */; };
+		B00000000000000000000019 /* ExtraWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* ExtraWidgetViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +70,7 @@
 		F00000000000000000000015 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		F00000000000000000000016 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		F00000000000000000000017 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
+		F00000000000000000000018 /* ExtraWidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtraWidgetViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +118,7 @@
 				F00000000000000000000002 /* Settings.swift */,
 				F00000000000000000000003 /* UsageViews.swift */,
 				F00000000000000000000017 /* L10n.swift */,
+				F00000000000000000000018 /* ExtraWidgetViews.swift */,
 				F00000000000000000000016 /* Localizable.xcstrings */,
 			);
 			path = Shared;
@@ -255,6 +259,7 @@
 				B00000000000000000000006 /* SettingsView.swift in Sources */,
 				B00000000000000000000012 /* Gallery.swift in Sources */,
 				B00000000000000000000016 /* L10n.swift in Sources */,
+				B00000000000000000000018 /* ExtraWidgetViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -267,6 +272,7 @@
 				B00000000000000000000009 /* UsageViews.swift in Sources */,
 				B00000000000000000000010 /* ClaudeUsageWidget.swift in Sources */,
 				B00000000000000000000017 /* L10n.swift in Sources */,
+				B00000000000000000000019 /* ExtraWidgetViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -292,6 +298,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = DGV8253YN4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -326,6 +333,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = DGV8253YN4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

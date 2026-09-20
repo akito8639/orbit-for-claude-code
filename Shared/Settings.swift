@@ -40,11 +40,12 @@ enum SettingKey: String, CaseIterable {
     case showSessions = "show_sessions"
     case showTodayUsage = "show_today_usage"
     case showResetTimes = "show_reset_times"
+    case forceEnglishWidgets = "force_english_widgets"
     case autoRefreshToken = "auto_refresh_token"
 
     var defaultValue: Bool {
         switch self {
-        case .showOtherWindows: return false
+        case .showOtherWindows, .forceEnglishWidgets: return false
         default: return true
         }
     }
@@ -64,6 +65,7 @@ enum SettingKey: String, CaseIterable {
         case .showSessions: return L("Running Claude Code sessions")
         case .showTodayUsage: return L("Today's tokens / API-equivalent cost")
         case .showResetTimes: return L("Reset times")
+        case .forceEnglishWidgets: return L("Widgets always in English")
         case .autoRefreshToken: return L("Refresh expired token automatically")
         }
     }
@@ -78,6 +80,8 @@ enum SettingKey: String, CaseIterable {
             return L("Service status")
         case .showSessions, .showTodayUsage:
             return L("Local (~/.claude)")
+        case .forceEnglishWidgets:
+            return L("Display")
         case .autoRefreshToken:
             return L("Authentication")
         }
