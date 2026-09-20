@@ -217,6 +217,22 @@ struct LocalSession: Codable, Hashable, Identifiable {
     var waitingFor: String? = nil    // "permission prompt" / "input needed" when status == waiting
     var statusUpdatedAt: Date? = nil
 
+    /// SF Symbol for where the session was started (Claude Code's `entrypoint`).
+    var entrypointSymbol: String {
+        switch entrypoint ?? "" {
+        case "cli", "terminal": return "terminal"
+        case "claude-desktop", "claude-desktop-3p", "desktop": return "macwindow"
+        case "claude-vscode", "vscode", "cursor", "windsurf", "zed", "jetbrains", "ide": return "chevron.left.forwardslash.chevron.right"
+        case "sdk-ts", "sdk-py", "sdk-cli": return "shippingbox"
+        case "local-agent", "cowork": return "person.2"
+        case "remote", "web": return "cloud"
+        case "slack", "claude-in-teams": return "bubble.left.and.bubble.right"
+        case "github-action", "ci": return "gearshape.2"
+        case "chrome": return "globe"
+        default: return "questionmark.circle"
+        }
+    }
+
     enum Activity { case working, needsInput, permission, idle, unknown }
     var activity: Activity {
         switch status {

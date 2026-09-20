@@ -137,9 +137,8 @@ struct SessionsWidgetView: View {
                 if size == .medium, let c = s.context {
                     Text("\(c.percent)%").font(fonts.cap()).foregroundStyle(.white.opacity(0.75)).monospacedDigit().lineLimit(1).fixedSize().animatedNumber(c.used)
                 }
-                if size == .large, let e = s.entrypoint {
-                    Chip(text: e == "claude-desktop" ? L("desktop") : L("cli"))
-                }
+                // Where it was started, as an icon (terminal / desktop app / IDE / SDK / Cowork / remote …) to leave room for the name.
+                Image(systemName: s.entrypointSymbol).font(.system(size: 9, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
                 if let st = s.startedAt { Text(Fmt.duration(now.timeIntervalSince(st))).font(fonts.cap()).foregroundStyle(.white.opacity(0.55)).lineLimit(1).fixedSize() }
             }
             if size == .large, let c = s.context {
