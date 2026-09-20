@@ -79,6 +79,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         UsageStore.shared.start()
     }
+
+    /// URLs handed over by widget taps (`widgetURL`). Web links go straight to the default browser.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls where url.scheme == "https" || url.scheme == "http" {
+            NSWorkspace.shared.open(url)
+        }
+    }
 }
 
 @main

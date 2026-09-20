@@ -128,6 +128,7 @@ struct OrbitStatusWidget: Widget {
             SecondaryWidgetEntryView(entry: entry) { size in
                 StatusWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
             }
+            .widgetURL(URL(string: "https://status.claude.com")!)   // tap → the app opens it in the browser
         }
         .configurationDisplayName(Text(L("Claude status")))
         .description(Text(L("Service status from status.claude.com: overall, per component, and open incidents.")))
