@@ -78,7 +78,7 @@ struct ClaudeUsageWidgetEntryView: View {
     }
 
     var body: some View {
-        UsageDashboardView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date, inWidget: true)
+        UsageDashboardView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date, inWidget: true, refreshable: true)
             .containerBackground(for: .widget) {
                 // In accented/clear (Liquid Glass) rendering the system paints its own glass; keep it transparent.
                 if renderingMode == .fullColor {

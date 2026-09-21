@@ -47,12 +47,13 @@ struct UsageDashboardView: View {
     var size: DashboardSize
     var now: Date = .now
     var inWidget: Bool = false
+    var refreshable: Bool = false   // the fetched-at stamp (small: the header) is a refresh button — the live widget only
 
     var body: some View {
         switch options.style {
-        case .glassOrbit: GlassOrbitView(snapshot: snapshot, options: options, size: size, now: now, inWidget: inWidget)
-        case .paceBars: PaceBarsView(snapshot: snapshot, options: options, size: size, now: now, inWidget: inWidget)
-        case .console: ConsoleView(snapshot: snapshot, options: options, size: size, now: now, inWidget: inWidget)
+        case .glassOrbit: GlassOrbitView(snapshot: snapshot, options: options, size: size, now: now, inWidget: inWidget, refreshable: refreshable)
+        case .paceBars: PaceBarsView(snapshot: snapshot, options: options, size: size, now: now, inWidget: inWidget, refreshable: refreshable)
+        case .console: ConsoleView(snapshot: snapshot, options: options, size: size, now: now, inWidget: inWidget, refreshable: refreshable)
         }
     }
 }
@@ -422,6 +423,7 @@ struct GlassOrbitView: View {
     var size: DashboardSize
     var now: Date
     var inWidget: Bool
+    var refreshable: Bool = false
     var hideExtrasRow: Bool = false   // large embeds the medium block; the details below already carry this info
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
@@ -498,12 +500,19 @@ struct GlassOrbitView: View {
                 Image(systemName: "asterisk").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.claude)
                 Text("Claude").font(.system(size: 11, weight: .bold, design: .rounded))
                 Spacer()
-                if options[.showServiceStatus] { StatusDot(status: snapshot.serviceStatus) }
+                RefreshStamp(text: nil, font: .system(size: 9), color: .white.opacity(0.5), refresh: refreshable)
             }
             Spacer(minLength: 8)
             GeometryReader { geo in
-                rings(diameter: min(geo.size.width, geo.size.height), dualCenter: true)
+                let d = min(geo.size.width, geo.size.height)
+                rings(diameter: d, dualCenter: true)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // The status lamp takes the free corner to the right of the ring, its bottom on the ring's outer
+                // edge (the stroke is centred on the circle, so that edge is half a line width below the frame).
+                if options[.showServiceStatus] {
+                    StatusDot(status: snapshot.serviceStatus)
+                        .position(x: geo.size.width - 6, y: geo.size.height / 2 + d / 2 + d * 0.0425 - 3.5)
+                }
             }
         }
         .foregroundStyle(.white)
@@ -526,9 +535,9 @@ struct GlassOrbitView: View {
                 HStack(spacing: 5) {
                     Image(systemName: "asterisk").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.claude)
                     Text("Claude").font(.system(size: 13, weight: .bold, design: .rounded)).lineLimit(1)
-                    if options[.showProfile], let p = snapshot.profile { Chip(text: p.planBadge) }
+                    if options[.showProfile], let p = snapshot.profile { Chip(text: p.planBadge).fixedSize() }
                     Spacer(minLength: 2)
-                    Text(Fmt.relative(snapshot.fetchedAt, now: now)).font(.system(size: 9, design: .rounded)).foregroundStyle(.white.opacity(0.5)).lineLimit(1).layoutPriority(1)
+                    RefreshStamp(text: Fmt.relative(snapshot.fetchedAt, now: now), font: .system(size: 9, design: .rounded), color: .white.opacity(0.5), refresh: refreshable)
                 }
                 Text(Headline.text(worst, now: now, options: options, snapshot: snapshot))
                     .font(.system(size: 12.5, weight: .semibold, design: .rounded))
@@ -558,7 +567,7 @@ struct GlassOrbitView: View {
         HStack(spacing: 6) {
             Text(w.title).font(.system(size: 10.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.6)).frame(width: 44, alignment: .leading).lineLimit(1).minimumScaleFactor(0.7)
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 6)
-            Text(Fmt.percent(w.utilization)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit().frame(width: 30, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
+            Text(Fmt.percent(w.utilization)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit().lineLimit(1).frame(width: 34, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
                 Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 9, design: .rounded)).foregroundStyle(.white.opacity(0.5)).frame(width: 50, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
             }
@@ -586,6 +595,7 @@ struct PaceBarsView: View {
     var size: DashboardSize
     var now: Date
     var inWidget: Bool
+    var refreshable: Bool = false
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
@@ -613,7 +623,7 @@ struct PaceBarsView: View {
             Spacer(minLength: 4)
             VStack(alignment: .trailing, spacing: 1) {
                 Text(Fmt.clockNow(now)).font(.system(size: 13, weight: .semibold, design: .rounded)).monospacedDigit()
-                Text(Fmt.relative(snapshot.fetchedAt, now: now)).font(.system(size: 9, design: .rounded)).foregroundStyle(.white.opacity(0.55))
+                RefreshStamp(text: Fmt.relative(snapshot.fetchedAt, now: now), font: .system(size: 9, design: .rounded), color: .white.opacity(0.55), refresh: refreshable)
             }
         }
     }
@@ -637,7 +647,7 @@ struct PaceBarsView: View {
             }
             .frame(width: 62, alignment: .leading)
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(lvl), showMarker: options[.showPaceMarker], height: barHeight)
-            Text(Fmt.percent(w.utilization)).font(.system(size: 12, weight: .bold, design: .rounded)).monospacedDigit().frame(width: 36, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
+            Text(Fmt.percent(w.utilization)).font(.system(size: 12, weight: .bold, design: .rounded)).monospacedDigit().lineLimit(1).frame(width: 36, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
                 Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 10, design: .rounded)).foregroundStyle(.white.opacity(0.55)).frame(width: 56, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
             }
@@ -650,6 +660,7 @@ struct PaceBarsView: View {
                 Image(systemName: "asterisk").font(.system(size: 10, weight: .bold))
                 Text("Claude").font(.system(size: 12, weight: .bold, design: .rounded))
                 Spacer()
+                RefreshStamp(text: nil, font: .system(size: 9), color: .white.opacity(0.55), refresh: refreshable)
                 if options[.showServiceStatus] { StatusDot(status: snapshot.serviceStatus) }
             }
             Text(worstLevel.label).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Palette.level(worstLevel))
@@ -710,6 +721,7 @@ struct ConsoleView: View {
     var size: DashboardSize
     var now: Date
     var inWidget: Bool
+    var refreshable: Bool = false
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
@@ -762,7 +774,7 @@ struct ConsoleView: View {
             Text("❯").font(mono(12, .bold)).foregroundStyle(Palette.claude)
             RoundedRectangle(cornerRadius: 1).fill(ink.opacity(0.8)).frame(width: 7, height: 13)
             Spacer()
-            Text(Fmt.relative(snapshot.fetchedAt, now: now)).font(mono(9.5)).foregroundStyle(dim)
+            RefreshStamp(text: Fmt.relative(snapshot.fetchedAt, now: now), font: mono(9.5), color: dim, refresh: refreshable)
         }
     }
 
@@ -772,6 +784,7 @@ struct ConsoleView: View {
                 Text("❯").font(mono(11, .bold)).foregroundStyle(Palette.claude)
                 Text("claude").font(mono(11, .bold)).foregroundStyle(ink)
                 Spacer()
+                RefreshStamp(text: nil, font: mono(9.5), color: dim, refresh: refreshable)
                 if options[.showServiceStatus] { StatusDot(status: snapshot.serviceStatus) }
             }
             ForEach(windows.prefix(3)) { w in

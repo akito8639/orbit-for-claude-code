@@ -15,40 +15,57 @@ private struct StyleFonts {
 /// "✱ Claude <section>" — same brand mark as the usage widget, then the section name in a lighter weight.
 private struct WidgetHeader: View {
     var icon: String
-    var title: String
+    var title: String?   // nil at small size: the mark, the refresh button and the lamp are all that fit
     var trailing: String?
     var fonts: StyleFonts
-    var refresh: (any AppIntent)? = nil   // tap target on the trailing label: re-renders the widget from the latest snapshot
+    var refresh = false   // the trailing label is a refresh button (icon only when there is no label: small widgets)
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: "asterisk").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.claude)
             Text("Claude").font(fonts.body(12, .bold)).lineLimit(1)
-            Text(title).font(fonts.body(12, .medium)).foregroundStyle(.white.opacity(0.75)).lineLimit(1).minimumScaleFactor(0.8)
+            if let title { Text(title).font(fonts.body(12, .medium)).foregroundStyle(.white.opacity(0.75)).lineLimit(1).minimumScaleFactor(0.8) }
             Spacer(minLength: 4)
-            if let refresh {
-                Button(intent: refresh) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "arrow.clockwise").font(.system(size: 8, weight: .bold))
-                        if let trailing { Text(trailing).font(fonts.cap()).lineLimit(1) }
-                    }
-                    .foregroundStyle(.white.opacity(0.5))
-                    .padding(.vertical, 2).padding(.horizontal, 4).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            } else if let trailing {
-                Text(trailing).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+            if trailing != nil || refresh {
+                RefreshStamp(text: trailing, font: fonts.cap(), color: .white.opacity(0.5), refresh: refresh)
             }
         }
         .foregroundStyle(.white)
     }
 }
 
-/// The sessions widget's refresh button. The widget extension is sandboxed and cannot read ~/.claude, so the fetch
-/// itself is the app's: perform asks for it through `orbit://refresh` (the same route as a widget tap; launches the app
-/// when it is not running) and waits for the app to rewrite snapshot.json. WidgetKit reloads a widget for free after
-/// one of its intents runs, so the reload that follows renders the fresh snapshot — sessions, lamps and "just now".
-struct RefreshSessionsIntent: AppIntent {
-    static let title: LocalizedStringResource = "Refresh sessions"
+/// The fetched-at stamp ("3m ago"). With `refresh` it becomes "↻ 3m ago" — or just "↻" where there is no room for
+/// the text — a button that asks the app for a fetch. Off for offscreen rendering and app-side previews, where an
+/// intent button has nothing to reload.
+struct RefreshStamp: View {
+    var text: String?
+    var font: Font
+    var color: Color
+    var refresh: Bool
+
+    var body: some View {
+        if refresh {
+            Button(intent: RefreshWidgetIntent()) {
+                HStack(spacing: 3) {
+                    Image(systemName: "arrow.clockwise").font(.system(size: text == nil ? 9 : 8, weight: .bold))
+                    if let text { Text(text).font(font).lineLimit(1).minimumScaleFactor(0.8) }
+                }
+                .foregroundStyle(color)
+                .padding(.vertical, text == nil ? 0 : 2).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else if let text {
+            Text(text).font(font).foregroundStyle(color).lineLimit(1)
+        }
+    }
+}
+
+/// The widgets' refresh button. The widget extension is sandboxed and cannot read ~/.claude, so the fetch itself is
+/// the app's: perform asks for it through `orbit://refresh` (the same route as a widget tap; launches the app when it
+/// is not running) and waits for the app to rewrite snapshot.json. WidgetKit reloads the tapped widget for free after
+/// one of its intents runs — outside the daily reload budget — so it renders the fresh snapshot right away, "just now"
+/// included; the app's forced reload then brings the other widgets along.
+struct RefreshWidgetIntent: AppIntent {
+    static let title: LocalizedStringResource = "Refresh"
     static let isDiscoverable = false
 
     func perform() async throws -> some IntentResult {
@@ -111,8 +128,8 @@ struct SessionsWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "terminal", title: L("Sessions"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts,
-                         refresh: linksEnabled ? RefreshSessionsIntent() : nil)
+            WidgetHeader(icon: "terminal", title: size == .small ? nil : L("Sessions"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts,
+                         refresh: linksEnabled)
             if sessions.isEmpty {
                 Spacer(minLength: 0)
                 Text(L("No running sessions")).font(fonts.body(11)).foregroundStyle(.white.opacity(0.6))
@@ -236,6 +253,7 @@ struct CoworkWidgetView: View {
     var options: DisplayOptions
     var size: DashboardSize
     var now: Date = .now
+    var linksEnabled: Bool = true   // false for offscreen rendering
 
     private var fonts: StyleFonts { StyleFonts(options.style) }
     private var sessions: [CoworkSession] { snapshot.coworkSessions ?? [] }
@@ -243,7 +261,8 @@ struct CoworkWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "person.2", title: L("Cowork"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
+            WidgetHeader(icon: "person.2", title: size == .small ? nil : L("Cowork"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts,
+                         refresh: linksEnabled)
             if sessions.isEmpty {
                 Spacer(minLength: 0)
                 Text(L("No Cowork sessions")).font(fonts.body(11)).foregroundStyle(.white.opacity(0.6))
@@ -286,6 +305,7 @@ struct StatusWidgetView: View {
     var options: DisplayOptions
     var size: DashboardSize
     var now: Date = .now
+    var linksEnabled: Bool = true   // false for offscreen rendering
 
     private var fonts: StyleFonts { StyleFonts(options.style) }
     private var status: ServiceStatus? { snapshot.serviceStatus }
@@ -308,7 +328,8 @@ struct StatusWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "waveform.path.ecg", title: L("Status"), trailing: size == .small ? nil : status?.updatedAt.map { Fmt.relative($0, now: now) }, fonts: fonts)
+            WidgetHeader(icon: "waveform.path.ecg", title: size == .small ? nil : L("Status"), trailing: size == .small ? nil : status?.updatedAt.map { Fmt.relative($0, now: now) }, fonts: fonts,
+                         refresh: linksEnabled)
             if size == .small {
                 Spacer(minLength: 0)
                 VStack(spacing: 6) {
@@ -321,13 +342,15 @@ struct StatusWidgetView: View {
                 Spacer(minLength: 0)
                 if let s = status, !s.components.isEmpty {
                     let ok = s.components.filter(\.isOperational).count
-                    HStack(spacing: 4) {
-                        ForEach(s.components) { c in
-                            Circle().fill(c.isOperational ? Palette.ok : Palette.warn).frame(width: 5, height: 5)
+                    VStack(spacing: 3) {
+                        HStack(spacing: 4) {
+                            ForEach(s.components) { c in
+                                Circle().fill(c.isOperational ? Palette.ok : Palette.warn).frame(width: 5, height: 5)
+                            }
                         }
-                        Spacer(minLength: 2)
                         Text(L("%d/%d operational", ok, s.components.count)).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.6)).lineLimit(1).minimumScaleFactor(0.8).animatedNumber(ok)
                     }
+                    .frame(maxWidth: .infinity)
                 }
             } else {
                 HStack(spacing: 6) {
@@ -361,6 +384,7 @@ struct TodayWidgetView: View {
     var options: DisplayOptions
     var size: DashboardSize
     var now: Date = .now
+    var linksEnabled: Bool = true   // false for offscreen rendering
 
     private var fonts: StyleFonts { StyleFonts(options.style) }
     private var today: LocalUsageToday? { snapshot.today }
@@ -381,7 +405,8 @@ struct TodayWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "sum", title: L("Today"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
+            WidgetHeader(icon: "sum", title: size == .small ? nil : L("Today"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts,
+                         refresh: linksEnabled)
             if let t = today {
                 if size == .small {
                     Spacer(minLength: 0)
