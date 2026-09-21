@@ -258,10 +258,10 @@ struct MenuBarLabel: View {
         // Label is what MenuBarExtra lays out correctly (icon + title on one baseline); inline images get dropped.
         let incident = (snapshot.serviceStatus.map { !$0.isHealthy } ?? false) && options[.showServiceStatus]
         let title = (worst.map { Fmt.percent($0.utilization) } ?? "Orbit") + (incident ? " ⚠︎" : "")
-        Label {
-            Text(title).monospacedDigit()
-        } icon: {
-            Image(systemName: "asterisk")
+        // The menu bar defaults to icon-only for Labels; ask for both, on one baseline.
+        HStack(alignment: .firstTextBaseline, spacing: 3) {
+            Image(systemName: "asterisk").font(.system(size: 12, weight: .semibold))
+            Text(title).font(.system(size: 13, weight: .medium)).monospacedDigit()
         }
     }
 }
