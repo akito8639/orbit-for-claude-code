@@ -43,13 +43,27 @@ private struct WidgetHeader: View {
     }
 }
 
-/// The sessions widget's refresh button. WidgetKit reloads a widget for free after one of its app intents runs, unlike
-/// reloads the app requests, which come out of the daily budget. The app rewrites snapshot.json every ~20 s, so the
-/// reload that follows shows the current sessions and lamps (the perform itself has nothing to do).
+/// The sessions widget's refresh button. The widget extension is sandboxed and cannot read ~/.claude, so the fetch
+/// itself is the app's: perform asks for it through `orbit://refresh` (the same route as a widget tap; launches the app
+/// when it is not running) and waits for the app to rewrite snapshot.json. WidgetKit reloads a widget for free after
+/// one of its intents runs, so the reload that follows renders the fresh snapshot — sessions, lamps and "just now".
 struct RefreshSessionsIntent: AppIntent {
     static let title: LocalizedStringResource = "Refresh sessions"
     static let isDiscoverable = false
-    func perform() async throws -> some IntentResult { .result() }
+
+    func perform() async throws -> some IntentResult {
+        let asked = Date.now
+        let config = NSWorkspace.OpenConfiguration()
+        config.activates = false
+        _ = try? await NSWorkspace.shared.open(URL(string: "orbit://refresh")!, configuration: config)
+        // A fetch takes a second or two; stop waiting after 10 s (app not installed, network down). fetchedAt is stored
+        // with whole-second precision, hence the 1 s slack.
+        for _ in 0..<20 {
+            if let fetched = SnapshotStore.load()?.fetchedAt, fetched >= asked.addingTimeInterval(-1) { break }
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        return .result()
+    }
 }
 
 // MARK: - Sessions

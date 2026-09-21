@@ -160,7 +160,14 @@ final class UsageStore: ObservableObject {
 
     /// `manual`: the user asked for it (menu, widget tap, settings) — every widget is reloaded, not only the changed ones.
     func refresh(forceTokenRefresh: Bool = false, manual: Bool = false) async {
-        guard !isRefreshing else { return }
+        if isRefreshing {
+            // A fetch is already running (the timer's, most likely). A manual request rides on it instead of being
+            // dropped: wait for it, then make sure every widget shows its result.
+            guard manual else { return }
+            while isRefreshing { try? await Task.sleep(for: .milliseconds(200)) }
+            publishWidgets(force: true)
+            return
+        }
         isRefreshing = true
         defer { isRefreshing = false }
         options = AppSettings.snapshot()
