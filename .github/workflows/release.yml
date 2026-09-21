@@ -31,7 +31,11 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p ci build.keychain
           security import cert.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          # Apple's intermediate for Developer ID — without it the signature chain does not validate.
+          curl -sSL -o DeveloperIDG2CA.cer https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security import DeveloperIDG2CA.cer -k build.keychain -T /usr/bin/codesign || true
           security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
+          security find-identity -v -p codesigning build.keychain
 
       - name: Build and sign
         env:
@@ -52,8 +56,17 @@ jobs:
           TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           APP="build/Build/Products/Release/Orbit for Claude Code.app"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dvv "$APP" 2>&1 | grep -E 'Authority|TeamIdentifier|Timestamp|flags'
           ditto -c -k --keepParent "$APP" Orbit.zip
-          xcrun notarytool submit Orbit.zip --apple-id "$APPLE_ID" --password "$APP_PASSWORD" --team-id "$TEAM" --wait
+          OUT=$(xcrun notarytool submit Orbit.zip --apple-id "$APPLE_ID" --password "$APP_PASSWORD" --team-id "$TEAM" --wait 2>&1 | tee /dev/stderr)
+          ID=$(echo "$OUT" | grep -m1 -oE 'id: [0-9a-f-]+' | cut -d' ' -f2)
+          if ! echo "$OUT" | grep -q 'status: Accepted'; then
+            echo "::group::notarization log"
+            xcrun notarytool log "$ID" --apple-id "$APPLE_ID" --password "$APP_PASSWORD" --team-id "$TEAM" || true
+            echo "::endgroup::"
+            exit 1
+          fi
           xcrun stapler staple "$APP"
           rm Orbit.zip
           ditto -c -k --keepParent "$APP" "Orbit-for-Claude-Code-${GITHUB_REF_NAME#v}.zip"
