@@ -77,7 +77,7 @@ enum SettingKey: String, CaseIterable {
         case .launchAtLogin: return L("Launch at login")
         case .notifyLimits: return L("Notify when a limit passes the threshold")
         case .notifyWaiting: return L("Notify when a session waits for you")
-        case .notifyIncidents: return L("Notify on Claude incidents")
+        case .notifyIncidents: return L("Notify when Claude has an incident and when it recovers")
         case .autoRefreshToken: return L("Refresh expired token automatically")
         }
     }

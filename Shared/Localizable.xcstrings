@@ -1302,24 +1302,24 @@
         }
       }
     },
-    "Notify on Claude incidents": {
+    "Notify when Claude has an incident and when it recovers": {
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude の障害発生時に通知"
+            "value": "Claude の障害発生時と復旧時に通知"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude 장애 발생 시 알림"
+            "value": "Claude 장애 발생 및 복구 시 알림"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude 发生故障时通知"
+            "value": "Claude 发生故障及恢复时通知"
           }
         }
       }
