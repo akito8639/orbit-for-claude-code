@@ -36,7 +36,7 @@ Five widgets in one app. Place the ones you need side by side; they share one de
 
 ### Menu bar
 
-The menu bar item shows the worst window (`✱ 45%`, plus ⚠︎ during a Claude incident). Its menu lists every window with its level and reset time, the service status, session counts, today's tokens, a design switch, refresh (⌘R), settings (⌘,) and quit.
+The menu bar item shows the worst window (`✱ 45%`, plus ⚠︎ during a Claude incident). Its menu is minimal: design switch, refresh (⌘R), settings (⌘,) and quit; everything else lives in the widgets.
 
 ### Designs
 
