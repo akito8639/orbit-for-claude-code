@@ -56,9 +56,12 @@ final class UsageStore: ObservableObject {
     }
 
     func settingsChanged() {
-        options = AppSettings.snapshot()
-        reschedule()
-        WidgetCenter.shared.reloadAllTimelines()
+        // Called from Toggle/Picker binding setters, i.e. during a view update: publish on the next run-loop turn.
+        Task { @MainActor in
+            options = AppSettings.snapshot()
+            reschedule()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 
     /// Re-reads session status/name only (no transcript parsing); keeps the context numbers from the last full refresh.
