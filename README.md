@@ -42,9 +42,13 @@ The menu bar item shows the worst window (`✱ 45%`, plus ⚠︎ during a Claude
 
 **Glass Orbit** (default) — concentric rings, inner 5-hour, outer the most constraining weekly cap; both numbers inside. **Pace Bars** — capsule bars with pace markers. **Console** — monospace, `❯ claude /usage`. All three adapt to the tinted / clear widget styles of macOS 26.
 
-Bars, rings and numbers animate between timeline updates. During a Claude incident the status widget gets a halo, the menu bar lamp pulses and the menu bar item shows ⚠︎:
+Bars, rings and numbers animate between timeline updates.
 
-![Status widget during an incident](docs/incident.png)
+### During an incident
+
+When status.claude.com reports a problem, the status widget gets a warning halo, the affected component is called out, the menu bar lamp pulses and the menu bar item shows ⚠︎:
+
+<img src="docs/incident.png" width="600" alt="Status widget during an incident">
 
 ## Requirements
 
