@@ -4,8 +4,8 @@
 #
 # Update `version` and `sha256` (from sha256.txt on the GitHub release) for each release.
 cask "orbit-for-claude-code" do
-  version "1.0.6"
-  sha256 "1dc51c8c8d394bd2a15defd3fefcf2df51d80858cf2f3c93257f50eabcdc5c1b"
+  version "1.0.7"
+  sha256 "43495b393a1d93298fc2a310f88a0bc544be24ec7cbb407f85de067ae2bd4c87"
 
   url "https://github.com/akito8639/orbit-for-claude-code/releases/download/v#{version}/Orbit-for-Claude-Code-#{version}.zip"
   name "Orbit for Claude Code"
