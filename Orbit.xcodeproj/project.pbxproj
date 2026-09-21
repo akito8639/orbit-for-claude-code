@@ -31,6 +31,7 @@
 		B00000000000000000000022 /* ClaudeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* ClaudeAPI.swift */; };
 		B00000000000000000000023 /* SharedToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* SharedToken.swift */; };
 		B00000000000000000000024 /* SharedToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* SharedToken.swift */; };
+		B00000000000000000000025 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = Q00000000000000000000001 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,6 +88,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B00000000000000000000025 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +180,9 @@
 				D00000000000000000000001 /* PBXTargetDependency */,
 			);
 			name = Orbit;
+			packageProductDependencies = (
+				Q00000000000000000000001 /* Sparkle */,
+			);
 			productName = "Orbit for Claude Code";
 			productReference = F00000000000000000000011 /* Orbit for Claude Code.app */;
 			productType = "com.apple.product-type.application";
@@ -229,6 +234,9 @@
 				Base,
 			);
 			mainGroup = G00000000000000000000001;
+			packageReferences = (
+				R00000000000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = G00000000000000000000002 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -303,6 +311,25 @@
 			targetProxy = X00000000000000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		R00000000000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		Q00000000000000000000001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = R00000000000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C00000000000000000000001 /* Debug */ = {
@@ -386,7 +413,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).OrbitForClaudeCode";
 				PRODUCT_NAME = "Orbit for Claude Code";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -411,7 +438,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).OrbitForClaudeCode";
 				PRODUCT_NAME = "Orbit for Claude Code";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -433,7 +460,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).OrbitForClaudeCode.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -456,7 +483,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).OrbitForClaudeCode.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

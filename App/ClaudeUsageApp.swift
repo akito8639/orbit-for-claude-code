@@ -3,6 +3,7 @@ import WidgetKit
 import AppKit
 import Combine
 import ServiceManagement
+import Sparkle
 
 @MainActor
 final class UsageStore: ObservableObject {
@@ -122,7 +123,11 @@ final class UsageStore: ObservableObject {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Sparkle: checks the appcast on GitHub Releases once a day (asks the user once before enabling).
+    static let updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        _ = Self.updater
         UsageStore.shared.start()
     }
 
@@ -300,6 +305,7 @@ struct MenuBarMenu: View {
             .disabled(store.isRefreshing)
             .keyboardShortcut("r")
         Divider()
+        Button(L("Check for Updates…")) { AppDelegate.updater.checkForUpdates(nil) }
         Button(L("Settings…")) { UsageStore.openSettingsWindow() }
             .keyboardShortcut(",")
         Button(L("Quit Orbit")) { NSApp.terminate(nil) }

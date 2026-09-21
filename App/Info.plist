@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>SUFeedURL</key>
+	<string>https://github.com/akito8639/orbit-for-claude-code/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>roxSs7XzfHxJL32U/x84nKbVLlwvX1M7t6TWCE31d94=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

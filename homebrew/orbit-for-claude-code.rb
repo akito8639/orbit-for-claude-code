@@ -14,6 +14,8 @@ cask "orbit-for-claude-code" do
 
   depends_on macos: :tahoe   # macOS 26 or later
 
+  auto_updates true   # the app updates itself with Sparkle
+
   app "Orbit for Claude Code.app"
 
   uninstall quit: "com.akito.OrbitForClaudeCode"

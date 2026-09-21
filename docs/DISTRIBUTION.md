@@ -12,6 +12,9 @@
 | アイコン | Icon Composer 形式 `App/AppIcon.icon`（背景＋2 レイヤー） |
 | 多言語 | String Catalog（英語 / 日本語 / 簡体字中国語 / 韓国語）。ウィジェットのみ英語固定の設定あり |
 | 初回起動 | 使用量が無ければ設定を自動で開く |
+| 自動更新 | Sparkle。Release の `appcast.xml`（`SPARKLE_PRIVATE_KEY` で署名）を 1 日 1 回確認 |
+| ウィジェット単独取得 | 本体が共有したアクセストークンで、本体停止中も使用量と稼働状況を取得 |
+| 通知 | しきい値超過 / セッションの入力待ち / Claude 障害 |
 
 ## リリース手順
 
@@ -25,7 +28,7 @@ git tag v1.0.1 && git push origin v1.0.1
 3. Release の `sha256.txt` の値で、`akito8639/homebrew-tap` の `Casks/orbit-for-claude-code.rb` の `version` と `sha256` を更新して push（このリポジトリの `homebrew/` は同じ内容のミラー）
 4. 動作確認: `brew update && brew upgrade --cask orbit-for-claude-code`
 
-必要な GitHub Secrets: `DEVELOPER_ID_P12`（.p12 の base64）、`DEVELOPER_ID_P12_PASSWORD`、`DEVELOPMENT_TEAM`、`NOTARY_APPLE_ID`（Developer Program に登録した Apple ID）、`NOTARY_PASSWORD`（App 用パスワード）。
+必要な GitHub Secrets: `DEVELOPER_ID_P12`（.p12 の base64）、`DEVELOPER_ID_P12_PASSWORD`、`DEVELOPMENT_TEAM`、`NOTARY_APPLE_ID`（Developer Program に登録した Apple ID）、`NOTARY_PASSWORD`（App 用パスワード）、`SPARKLE_PRIVATE_KEY`（`generate_keys -x` で書き出した EdDSA 秘密鍵。対応する公開鍵は `App/Info.plist` の `SUPublicEDKey`）。
 
 ## つまずきやすい点
 
@@ -36,11 +39,8 @@ git tag v1.0.1 && git push origin v1.0.1
 
 ## 今後の候補
 
-- ログイン時起動（`SMAppService.mainApp.register()`）のトグル
-- `keychain-access-groups` でウィジェット拡張が単独で取得できるようにし、本体常駐を不要にする
-- 上限接近や入力待ちの通知
-- Sparkle による自動更新（現状は Homebrew か手動）
 - 中国語・韓国語のネイティブ校正
+- ウィジェット単独でのトークン更新（現状は本体が更新したアクセストークンを共有。約 8 時間で期限切れ）
 
 ## 利用者向けの要点
 

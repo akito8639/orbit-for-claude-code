@@ -7,6 +7,7 @@ name: Release
 #   DEVELOPMENT_TEAM          Apple Team ID (e.g. ABCDE12345)
 #   NOTARY_APPLE_ID           Apple ID used for notarization
 #   NOTARY_PASSWORD           app-specific password for that Apple ID
+#   SPARKLE_PRIVATE_KEY       EdDSA private key exported with `generate_keys -x` (signs the appcast entry)
 on:
   push:
     tags: ["v*"]
@@ -74,10 +75,41 @@ jobs:
           ditto -c -k --keepParent "$APP" "Orbit-for-Claude-Code-${GITHUB_REF_NAME#v}.zip"
           shasum -a 256 "Orbit-for-Claude-Code-${GITHUB_REF_NAME#v}.zip" | tee sha256.txt
 
+      - name: Sparkle appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ZIP="Orbit-for-Claude-Code-${VERSION}.zip"
+          SIGN=$(find ~/Library/Developer/Xcode/DerivedData build -path '*artifacts/sparkle/Sparkle/bin/sign_update' 2>/dev/null | head -1)
+          [ -n "$SIGN" ] || SIGN=$(find / -path '*/Sparkle/bin/sign_update' 2>/dev/null | head -1)
+          SIG=$("$SIGN" -s "$SPARKLE_PRIVATE_KEY" "$ZIP")          # → sparkle:edSignature="…" length="…"
+          BUILD="${{ github.run_number }}"
+          cat > appcast.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+            <channel>
+              <title>Orbit for Claude Code</title>
+              <item>
+                <title>${VERSION}</title>
+                <pubDate>$(date -R)</pubDate>
+                <sparkle:version>${BUILD}</sparkle:version>
+                <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+                <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+                <link>https://github.com/${{ github.repository }}/releases/tag/${GITHUB_REF_NAME}</link>
+                <enclosure url="https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${ZIP}" ${SIG} type="application/octet-stream"/>
+              </item>
+            </channel>
+          </rss>
+          EOF
+          sed -i '' 's/^          //' appcast.xml
+          cat appcast.xml
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             Orbit-for-Claude-Code-*.zip
             sha256.txt
+            appcast.xml
           generate_release_notes: true
