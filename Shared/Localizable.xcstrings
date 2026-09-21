@@ -617,6 +617,28 @@
         }
       }
     },
+    "Claude incidents and recovery": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude の障害と復旧"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 장애 및 복구"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 故障与恢复"
+          }
+        }
+      }
+    },
     "Claude service status (status.claude.com)": {
       "extractionState": "stale",
       "localizations": {
@@ -1002,6 +1024,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "已达上限"
+          }
+        }
+      }
+    },
+    "Limit threshold (%d%%)": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用率のしきい値 (%d%%)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용량 임계값 (%d%%)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用量阈值 (%d%%)"
           }
         }
       }
@@ -2052,6 +2096,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "来自 status.claude.com 的服务状态：整体、各组件及未解决事件。"
+          }
+        }
+      }
+    },
+    "Session waiting for you": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セッションの入力待ち"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세션 입력 대기"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会话等待你"
           }
         }
       }

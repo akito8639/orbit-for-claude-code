@@ -301,6 +301,11 @@ struct MenuBarMenu: View {
         Picker(L("Design"), selection: Binding(get: { store.options.style }, set: { AppSettings.style = $0; store.settingsChanged() })) {
             ForEach(WidgetStyle.allCases) { s in Text(s.title).tag(s) }
         }
+        Menu(L("Notifications")) {
+            Toggle(L("Limit threshold (%d%%)", AppSettings.notifyThreshold), isOn: toggle(.notifyLimits))
+            Toggle(L("Session waiting for you"), isOn: toggle(.notifyWaiting))
+            Toggle(L("Claude incidents and recovery"), isOn: toggle(.notifyIncidents))
+        }
         Button(store.isRefreshing ? L("Refreshing…") : L("Refresh")) { Task { await store.refresh() } }
             .disabled(store.isRefreshing)
             .keyboardShortcut("r")
@@ -310,5 +315,9 @@ struct MenuBarMenu: View {
             .keyboardShortcut(",")
         Button(L("Quit Orbit")) { NSApp.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    private func toggle(_ key: SettingKey) -> Binding<Bool> {
+        Binding(get: { store.options[key] }, set: { AppSettings.set(key, $0); store.settingsChanged() })
     }
 }
