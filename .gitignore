@@ -9,3 +9,6 @@ Config.local.xcconfig
 !docs/*.png
 !docs/*.jpg
 !App/AppIcon.icon/Assets/*.png
+*.p12
+*.cer
+*.mobileprovision
