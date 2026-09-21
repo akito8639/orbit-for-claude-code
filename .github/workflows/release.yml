@@ -98,7 +98,10 @@ jobs:
           ZIP="Orbit-for-Claude-Code-${VERSION}.zip"
           SIGN=$(find ~/Library/Developer/Xcode/DerivedData build -path '*artifacts/sparkle/Sparkle/bin/sign_update' 2>/dev/null | head -1)
           [ -n "$SIGN" ] || SIGN=$(find / -path '*/Sparkle/bin/sign_update' 2>/dev/null | head -1)
-          SIG=$("$SIGN" -s "$SPARKLE_PRIVATE_KEY" "$ZIP")          # → sparkle:edSignature="…" length="…"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" | tr -d '\n\r ' > sparkle.key
+          SIG=$("$SIGN" --ed-key-file sparkle.key "$ZIP") || { echo "sign_update failed"; rm -f sparkle.key; exit 1; }
+          rm -f sparkle.key
+          echo "signature: $SIG"                                   # sparkle:edSignature="…" length="…"
           BUILD="${{ github.run_number }}"
           cat > appcast.xml <<EOF
           <?xml version="1.0" encoding="utf-8"?>
