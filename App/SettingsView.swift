@@ -137,13 +137,13 @@ extension SettingsView {
                             manualTokenSaved = ManualTokenStore.load() != nil
                             manualToken = ""
                             manualMessage = L("Saved")
-                            Task { await store.refresh(); manualMessage = store.snapshot.errorMessage ?? L("Fetched OK") }
+                            Task { await store.refresh(manual: true); manualMessage = store.snapshot.errorMessage ?? L("Fetched OK") }
                         } catch { manualMessage = L("Save failed: %@", error.localizedDescription) }
                     }
                     .disabled(manualToken.trimmingCharacters(in: .whitespaces).isEmpty)
                     Button(L("Delete")) {
                         ManualTokenStore.delete(); manualTokenSaved = false; manualMessage = L("Deleted")
-                        Task { await store.refresh() }
+                        Task { await store.refresh(manual: true) }
                     }
                     .disabled(!manualTokenSaved)
                     if let m = manualMessage { Text(m).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
@@ -163,7 +163,7 @@ extension SettingsView {
                 HStack {
                     Button(L("Refresh now and fetch")) {
                         Task {
-                            await store.refresh(forceTokenRefresh: true)
+                            await store.refresh(forceTokenRefresh: true, manual: true)
                             tokenMessage = store.snapshot.errorMessage ?? "OK (\(store.snapshot.tokenState.rawValue))"
                         }
                     }

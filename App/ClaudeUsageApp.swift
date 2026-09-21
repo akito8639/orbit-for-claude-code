@@ -80,7 +80,8 @@ final class UsageStore: ObservableObject {
     }
 
     /// Reloads each widget kind whose content (snapshot slice + display options) differs from what it last rendered.
-    func publishWidgets() {
+    /// `force` reloads every kind regardless (a refresh the user asked for should visibly land on all widgets).
+    func publishWidgets(force: Bool = false) {
         let o = options, s = snapshot
         var h = Hasher(); h.combine(o)
         let base = h.finalize()
@@ -96,21 +97,21 @@ final class UsageStore: ObservableObject {
                                          $0.startedAt.map { Int($0.timeIntervalSinceReferenceDate / 60) }] as [AnyHashable] }
         let today = s.today.map { [Fmt.tokens($0.totalTokens), String(format: "%.1f", $0.estimatedCostUSD), $0.byModel] as [AnyHashable] }
         let status = s.serviceStatus.map { [$0.indicator, $0.description, $0.claudeCodeStatus, $0.unresolvedIncidents, $0.components] as [AnyHashable] }
-        reloadWidget(AppConstants.widgetKind, fingerprint: fp(windows, s.extraUsage, s.profile, s.breakdown, status, sessions, today, s.tokenState, s.errorMessage))
-        reloadWidget("OrbitSessionsWidget", fingerprint: fp(sessions, s.sessions.first?.version))
-        reloadWidget("OrbitCoworkWidget", fingerprint: fp(s.coworkSessions))
-        reloadWidget("OrbitStatusWidget", fingerprint: fp(status, s.serviceStatus?.updatedAt.map { Int($0.timeIntervalSinceReferenceDate / 60) }))
-        reloadWidget("OrbitTodayWidget", fingerprint: fp(today))
+        reloadWidget(AppConstants.widgetKind, fingerprint: fp(windows, s.extraUsage, s.profile, s.breakdown, status, sessions, today, s.tokenState, s.errorMessage), force: force)
+        reloadWidget("OrbitSessionsWidget", fingerprint: fp(sessions, s.sessions.first?.version), force: force)
+        reloadWidget("OrbitCoworkWidget", fingerprint: fp(s.coworkSessions), force: force)
+        reloadWidget("OrbitStatusWidget", fingerprint: fp(status, s.serviceStatus?.updatedAt.map { Int($0.timeIntervalSinceReferenceDate / 60) }), force: force)
+        reloadWidget("OrbitTodayWidget", fingerprint: fp(today), force: force)
     }
 
-    private func reloadWidget(_ kind: String, fingerprint: Int) {
+    private func reloadWidget(_ kind: String, fingerprint: Int, force: Bool) {
         let changed = widgetFingerprints[kind] != fingerprint
         widgetFingerprints[kind] = fingerprint
         let age = Date.now.timeIntervalSince(widgetReloadedAt[kind] ?? .distantPast)
-        guard changed || age > Self.widgetMaxAge, !widgetReloadPending.contains(kind) else { return }   // a queued reload renders the latest snapshot anyway
+        guard force || changed || age > Self.widgetMaxAge, !widgetReloadPending.contains(kind) else { return }   // a queued reload renders the latest snapshot anyway
         widgetReloadPending.insert(kind)
         Task { @MainActor in
-            let wait = Self.widgetMinReloadInterval - age
+            let wait = force ? 0 : Self.widgetMinReloadInterval - age
             if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
             widgetReloadPending.remove(kind)
             widgetReloadedAt[kind] = .now
@@ -148,7 +149,8 @@ final class UsageStore: ObservableObject {
         publishWidgets()
     }
 
-    func refresh(forceTokenRefresh: Bool = false) async {
+    /// `manual`: the user asked for it (menu, widget tap, settings) — every widget is reloaded, not only the changed ones.
+    func refresh(forceTokenRefresh: Bool = false, manual: Bool = false) async {
         guard !isRefreshing else { return }
         isRefreshing = true
         defer { isRefreshing = false }
@@ -165,7 +167,7 @@ final class UsageStore: ObservableObject {
             credentialInfo = "not found"
         }
         try? SnapshotStore.save(snapshot)
-        publishWidgets()
+        publishWidgets(force: manual)
     }
 }
 
@@ -197,7 +199,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let store = UsageStore.shared
         switch url.host {
         case "refresh":
-            Task { await store.refresh() }
+            Task { await store.refresh(manual: true) }
         case "settings":
             UsageStore.openSettingsWindow()
         case "sessions", "cowork":
@@ -354,7 +356,7 @@ struct MenuBarMenu: View {
             Toggle(L("Session waiting for you"), isOn: toggle(.notifyWaiting))
             Toggle(L("Claude incidents and recovery"), isOn: toggle(.notifyIncidents))
         }
-        Button(store.isRefreshing ? L("Refreshing…") : L("Refresh")) { Task { await store.refresh() } }
+        Button(store.isRefreshing ? L("Refreshing…") : L("Refresh")) { Task { await store.refresh(manual: true) } }
             .disabled(store.isRefreshing)
             .keyboardShortcut("r")
         Divider()
