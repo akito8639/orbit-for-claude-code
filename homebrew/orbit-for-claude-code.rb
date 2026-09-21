@@ -12,14 +12,9 @@ cask "orbit-for-claude-code" do
   desc "Menu bar app and widget showing Claude Code usage limits (5h / weekly / per-model), status and local sessions"
   homepage "https://github.com/akito8639/orbit-for-claude-code"
 
-  depends_on macos: ">= :tahoe"   # macOS 26 or later (Liquid Glass, WidgetKit APIs used here)
+  depends_on macos: :tahoe   # macOS 26 or later
 
   app "Orbit for Claude Code.app"
-
-  postflight do
-    # Register the widget extension with the system so it appears in the widget gallery right away.
-    system_command "/usr/bin/pluginkit", args: ["-a", "#{appdir}/Orbit for Claude Code.app/Contents/PlugIns/OrbitWidget.appex"]
-  end
 
   uninstall quit: "com.akito.OrbitForClaudeCode"
 
