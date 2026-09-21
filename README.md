@@ -48,7 +48,7 @@ Bars, rings and numbers animate between timeline updates.
 
 When status.claude.com reports a problem, the status widget gets a warning halo, the affected component is called out, the menu bar lamp pulses and the menu bar item shows ⚠︎:
 
-<img src="docs/incident.png" width="600" alt="Status widget during an incident">
+<img src="docs/status-incident.png" width="600" alt="Status widget during an incident">
 
 ## Requirements
 
