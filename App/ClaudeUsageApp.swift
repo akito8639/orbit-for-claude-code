@@ -130,16 +130,25 @@ final class UsageStore: ObservableObject {
         }
     }
 
-    /// Re-reads session status/name only (no transcript parsing); keeps the context numbers from the last full refresh.
+    /// A session that has just appeared is held back until its transcript yields a context figure, so the list never
+    /// shows a row without its context bar that then jumps once the figure arrives. Sessions already listed stay listed.
+    private static func admitting(_ fresh: [LocalSession], previouslyListed: [LocalSession]) -> [LocalSession] {
+        fresh.filter { s in s.context != nil || previouslyListed.contains { $0.id == s.id } }
+    }
+
+    /// Re-reads session status/name (no transcript parsing for known sessions); keeps the context numbers from the
+    /// last full refresh. A new session reads its transcript tail right away so it can be admitted with its bar.
     func pollSessions() async {
         guard !isRefreshing, options[.showSessions] else { return }
-        let fresh = await Task.detached(priority: .utility) { LocalScanner.runningSessions(includeContext: false) }.value
         let old = snapshot.sessions
-        let merged = fresh.map { s -> LocalSession in
-            var m = s
-            m.context = old.first { $0.id == s.id }?.context
-            return m
-        }
+        let fresh = await Task.detached(priority: .utility) {
+            LocalScanner.runningSessions(includeContext: false).map { s -> LocalSession in
+                var m = s
+                m.context = old.first { $0.id == s.id }?.context ?? LocalScanner.contextUsage(sessionId: s.id, cwd: s.cwd)
+                return m
+            }
+        }.value
+        let merged = Self.admitting(fresh, previouslyListed: old)
         let changed = merged.map { "\($0.id)|\($0.status ?? "")|\($0.waitingFor ?? "")|\($0.name ?? "")" } != old.map { "\($0.id)|\($0.status ?? "")|\($0.waitingFor ?? "")|\($0.name ?? "")" }
         guard changed else { return }
         let previous = snapshot
@@ -158,6 +167,7 @@ final class UsageStore: ObservableObject {
         let report = await Collector.collect(options: options, forceTokenRefresh: forceTokenRefresh)
         let previous = snapshot
         snapshot = report.snapshot
+        snapshot.sessions = Self.admitting(report.snapshot.sessions, previouslyListed: previous.sessions)
         Notifier.shared.evaluate(old: previous, new: snapshot, options: options)
         if let c = report.credentials {
             let where_ = c.service ?? c.fileURL?.path ?? "?"
