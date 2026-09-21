@@ -7,7 +7,12 @@ import AppKit
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     static let shared = Notifier()
 
-    private var notifiedWindows: [String: Date] = [:]        // window id → resetsAt that was already announced
+    /// window id → what the last limit notification said ("<period>|<percent>"). Persisted so a relaunch does not repeat it.
+    /// The period is resets_at rounded to the minute: the API adds microsecond jitter to it on every response.
+    private var notifiedLimits: [String: String] = AppSettings.defaults.dictionary(forKey: Notifier.notifiedLimitsKey) as? [String: String] ?? [:] {
+        didSet { AppSettings.defaults.set(notifiedLimits, forKey: Self.notifiedLimitsKey) }
+    }
+    private static let notifiedLimitsKey = "notified_limits"
     private var waitingSessions: Set<String> = []            // session ids already announced as waiting
     private var incidentAnnounced = false
     private var authorized = false
@@ -26,16 +31,18 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         if options[.notifyLimits] {
             let threshold = Double(AppSettings.notifyThreshold)
             for w in options.visibleWindows(new) {
-                let key = w.id
-                let already = notifiedWindows[key] == w.resetsAt
-                if w.utilization >= threshold, !already {
-                    notifiedWindows[key] = w.resetsAt ?? .distantPast
-                    post(id: "limit-\(key)",
+                let period = w.resetsAt.map { Int($0.timeIntervalSinceReferenceDate / 60) } ?? -1
+                let state = "\(period)|\(Fmt.percent(w.utilization))"
+                if w.utilization >= threshold {
+                    // Post only when the notification would differ from the last one (percent moved or a new period).
+                    guard notifiedLimits[w.id] != state else { continue }
+                    notifiedLimits[w.id] = state
+                    post(id: "limit-\(w.id)",
                          title: L("%@ at %@", w.title, Fmt.percent(w.utilization)),
                          body: L("Resets %@", Fmt.resetLabel(w.resetsAt)),
                          userInfo: ["kind": "limit"])
-                } else if w.utilization < threshold, notifiedWindows[key] != nil, notifiedWindows[key] != w.resetsAt {
-                    notifiedWindows[key] = nil   // new window period: allow the next crossing
+                } else if notifiedLimits[w.id] != nil {
+                    notifiedLimits[w.id] = nil   // back below the threshold (new period): announce the next crossing
                 }
             }
         }

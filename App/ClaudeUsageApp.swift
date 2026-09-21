@@ -18,9 +18,19 @@ final class UsageStore: ObservableObject {
     private var timer: Timer?
     private var sessionTimer: Timer?
 
+    // WidgetKit gives each widget only ~40–70 reloads a day, and a menu bar app never counts as "in the foreground"
+    // (the case that is exempt). Reloading every kind after every fetch and every session poll used that budget up
+    // within hours; from then on WidgetKit deferred the reloads and the widgets — the sessions list most visibly —
+    // stopped following the fresh snapshot on disk. So: reload a kind only when what it draws changed, and coalesce.
+    private var widgetFingerprints: [String: Int] = [:]
+    private var widgetReloadedAt: [String: Date] = [:]
+    private var widgetReloadPending: Set<String> = []
+    private static let widgetMinReloadInterval: TimeInterval = 30
+    private static let widgetMaxAge: TimeInterval = 45 * 60   // re-render anyway so "Nm ago" cannot drift for hours
+
     func start() {
         Notifier.shared.prepare()
-        // Cheap poll of ~/.claude/sessions so the activity lamps follow Claude Code within ~20 s.
+        // Cheap poll of ~/.claude/sessions so the activity lamps follow Claude Code within ~30 s (poll + coalesced widget reload).
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             Task { await self?.pollSessions() }
         }
@@ -65,7 +75,46 @@ final class UsageStore: ObservableObject {
             reschedule()
             Self.syncLoginItem(options[.launchAtLogin])
             Notifier.shared.prepare()
-            WidgetCenter.shared.reloadAllTimelines()
+            publishWidgets()
+        }
+    }
+
+    /// Reloads each widget kind whose content (snapshot slice + display options) differs from what it last rendered.
+    func publishWidgets() {
+        let o = options, s = snapshot
+        var h = Hasher(); h.combine(o)
+        let base = h.finalize()
+        func fp(_ parts: AnyHashable...) -> Int { var h = Hasher(); h.combine(base); for p in parts { h.combine(p) }; return h.finalize() }
+        // Rounded the way the views draw them: resets_at carries server-side microsecond jitter, utilization is shown as a whole percent.
+        let windows = s.windows.map { w -> [AnyHashable] in
+            [w.id, Int(w.utilization.rounded()), w.resetsAt.map { Int($0.timeIntervalSinceReferenceDate / 60) } ?? -1, w.scopeName, w.severity, w.isActive]
+        }
+        // Sessions reload the widgets for a session appearing/going, a title change or "waiting for you" — not for the
+        // busy⇄idle lamp, which flips several times per turn and would burn the budget by itself; the context figure
+        // is coarse (10-point steps) for the same reason. The refresh button in the sessions widget shows the exact state.
+        let sessions = s.sessions.map { [$0.id, $0.name, $0.activity == .needsInput || $0.activity == .permission, ($0.context?.percent ?? -10) / 10,
+                                         $0.startedAt.map { Int($0.timeIntervalSinceReferenceDate / 60) }] as [AnyHashable] }
+        let today = s.today.map { [Fmt.tokens($0.totalTokens), String(format: "%.1f", $0.estimatedCostUSD), $0.byModel] as [AnyHashable] }
+        let status = s.serviceStatus.map { [$0.indicator, $0.description, $0.claudeCodeStatus, $0.unresolvedIncidents, $0.components] as [AnyHashable] }
+        reloadWidget(AppConstants.widgetKind, fingerprint: fp(windows, s.extraUsage, s.profile, s.breakdown, status, sessions, today, s.tokenState, s.errorMessage))
+        reloadWidget("OrbitSessionsWidget", fingerprint: fp(sessions, s.sessions.first?.version))
+        reloadWidget("OrbitCoworkWidget", fingerprint: fp(s.coworkSessions))
+        reloadWidget("OrbitStatusWidget", fingerprint: fp(status, s.serviceStatus?.updatedAt.map { Int($0.timeIntervalSinceReferenceDate / 60) }))
+        reloadWidget("OrbitTodayWidget", fingerprint: fp(today))
+    }
+
+    private func reloadWidget(_ kind: String, fingerprint: Int) {
+        let changed = widgetFingerprints[kind] != fingerprint
+        widgetFingerprints[kind] = fingerprint
+        let age = Date.now.timeIntervalSince(widgetReloadedAt[kind] ?? .distantPast)
+        guard changed || age > Self.widgetMaxAge, !widgetReloadPending.contains(kind) else { return }   // a queued reload renders the latest snapshot anyway
+        widgetReloadPending.insert(kind)
+        Task { @MainActor in
+            let wait = Self.widgetMinReloadInterval - age
+            if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+            widgetReloadPending.remove(kind)
+            widgetReloadedAt[kind] = .now
+            WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
     }
 
@@ -96,8 +145,7 @@ final class UsageStore: ObservableObject {
         snapshot.sessions = merged
         Notifier.shared.evaluate(old: previous, new: snapshot, options: options)
         try? SnapshotStore.save(snapshot)
-        WidgetCenter.shared.reloadTimelines(ofKind: "OrbitSessionsWidget")
-        WidgetCenter.shared.reloadTimelines(ofKind: AppConstants.widgetKind)
+        publishWidgets()
     }
 
     func refresh(forceTokenRefresh: Bool = false) async {
@@ -117,7 +165,7 @@ final class UsageStore: ObservableObject {
             credentialInfo = "not found"
         }
         try? SnapshotStore.save(snapshot)
-        WidgetCenter.shared.reloadAllTimelines()
+        publishWidgets()
     }
 }
 

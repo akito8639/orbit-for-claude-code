@@ -1,4 +1,5 @@
 import SwiftUI
+import AppIntents
 import WidgetKit
 
 // Views for the secondary widgets (Sessions / Status / Today). They share the style setting
@@ -17,16 +18,38 @@ private struct WidgetHeader: View {
     var title: String
     var trailing: String?
     var fonts: StyleFonts
+    var refresh: (any AppIntent)? = nil   // tap target on the trailing label: re-renders the widget from the latest snapshot
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: "asterisk").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.claude)
             Text("Claude").font(fonts.body(12, .bold)).lineLimit(1)
             Text(title).font(fonts.body(12, .medium)).foregroundStyle(.white.opacity(0.75)).lineLimit(1).minimumScaleFactor(0.8)
             Spacer(minLength: 4)
-            if let trailing { Text(trailing).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)).lineLimit(1) }
+            if let refresh {
+                Button(intent: refresh) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.clockwise").font(.system(size: 8, weight: .bold))
+                        if let trailing { Text(trailing).font(fonts.cap()).lineLimit(1) }
+                    }
+                    .foregroundStyle(.white.opacity(0.5))
+                    .padding(.vertical, 2).padding(.horizontal, 4).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            } else if let trailing {
+                Text(trailing).font(fonts.cap()).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+            }
         }
         .foregroundStyle(.white)
     }
+}
+
+/// The sessions widget's refresh button. WidgetKit reloads a widget for free after one of its app intents runs, unlike
+/// reloads the app requests, which come out of the daily budget. The app rewrites snapshot.json every ~20 s, so the
+/// reload that follows shows the current sessions and lamps (the perform itself has nothing to do).
+struct RefreshSessionsIntent: AppIntent {
+    static let title: LocalizedStringResource = "Refresh sessions"
+    static let isDiscoverable = false
+    func perform() async throws -> some IntentResult { .result() }
 }
 
 // MARK: - Sessions
@@ -74,7 +97,8 @@ struct SessionsWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "terminal", title: L("Sessions"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts)
+            WidgetHeader(icon: "terminal", title: L("Sessions"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts,
+                         refresh: linksEnabled ? RefreshSessionsIntent() : nil)
             if sessions.isEmpty {
                 Spacer(minLength: 0)
                 Text(L("No running sessions")).font(fonts.body(11)).foregroundStyle(.white.opacity(0.6))
