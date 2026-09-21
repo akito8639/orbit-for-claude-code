@@ -252,13 +252,14 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let worst = snapshot.worstWindow(visible: Set(options.visibleWindows(snapshot).map(\.id)))
-        HStack(spacing: 3) {
-            Image(systemName: "asterisk")
-            Text(worst.map { Fmt.percent($0.utilization) } ?? "Orbit").monospacedDigit()
-            if let s = snapshot.serviceStatus, !s.isHealthy, options[.showServiceStatus] {
-                Image(systemName: "exclamationmark.triangle.fill")   // Claude incident
-            }
-        }
+        // One Text with inline images keeps icon and digits on the same baseline in the menu bar.
+        let mark = Text(Image(systemName: "asterisk"))
+        let value = Text(worst.map { Fmt.percent($0.utilization) } ?? "Orbit")
+        let incident = (snapshot.serviceStatus.map { !$0.isHealthy } ?? false) && options[.showServiceStatus]
+        let alert = incident ? Text(" ") + Text(Image(systemName: "exclamationmark.triangle.fill")) : Text("")
+        (mark + Text(" ") + value + alert)
+            .font(.system(size: 13, weight: .medium))
+            .monospacedDigit()
     }
 }
 
