@@ -155,6 +155,15 @@ struct ClaudeUsageApp: App {
     init() {
         // `Orbit --render out.png [--live]` writes a gallery of every style × size and exits (used for previews/docs).
         let args = CommandLine.arguments
+        // `--style glassOrbit|paceBars|console` forces a design for the render flags below.
+        if let i = args.firstIndex(of: "--style"), i + 1 < args.count, let st = WidgetStyle(rawValue: args[i + 1]) {
+            AppSettings.style = st
+        }
+        if let i = args.firstIndex(of: "--render-panel"), i + 1 < args.count {
+            let snap = args.contains("--live") ? (SnapshotStore.load() ?? .placeholder) : .placeholder
+            Gallery.renderPanel(to: URL(fileURLWithPath: args[i + 1]), snapshot: snap)
+            exit(0)
+        }
         if args.contains("--reload") {
             WidgetCenter.shared.reloadAllTimelines()
             Thread.sleep(forTimeInterval: 1)

@@ -5,5 +5,7 @@ xcuserdata/
 Config.local.xcconfig
 .DS_Store
 *.png
-!docs/gallery.png
-docs/row_*.jpg
+*.jpg
+!docs/*.png
+!docs/*.jpg
+!App/AppIcon.icon/Assets/*.png

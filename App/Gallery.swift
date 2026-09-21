@@ -55,6 +55,54 @@ enum Gallery {
     }
 }
 
+// MARK: - Menu bar panel mock (for the README)
+
+extension Gallery {
+    @MainActor
+    static func renderPanel(to url: URL, snapshot: UsageSnapshot) {
+        let opts = AppSettings.snapshot()
+        let level = snapshot.worstWindow()?.level() ?? .onTrack
+        let view = VStack(spacing: 10) {
+            UsageDashboardView(snapshot: snapshot, options: opts, size: .medium)
+                .padding(18)
+                .frame(width: 344, height: 164)
+                .background(DashboardBackground(style: opts.style, level: level))
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(.white.opacity(0.18), lineWidth: 1))
+            HStack(spacing: 0) {
+                ForEach(WidgetStyle.allCases) { s in
+                    Text(s.title).font(.system(size: 12, weight: .medium))
+                        .padding(.vertical, 5).frame(maxWidth: .infinity)
+                        .background(s == opts.style ? Color.white.opacity(0.22) : .clear, in: RoundedRectangle(cornerRadius: 8))
+                }
+            }
+            .padding(2).background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+            HStack {
+                Label(L("Refresh"), systemImage: "arrow.clockwise").font(.system(size: 12)).padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Color.white.opacity(0.12), in: Capsule())
+                Spacer()
+                Image(systemName: "gearshape").padding(8).background(Color.white.opacity(0.12), in: Circle())
+                Image(systemName: "power").padding(8).background(Color.white.opacity(0.12), in: Circle())
+            }
+            .font(.system(size: 12))
+        }
+        .frame(width: 344)
+        .padding(12)
+        .foregroundStyle(.white)
+        .background(Color(red: 0.13, green: 0.13, blue: 0.16).opacity(0.96), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(.white.opacity(0.15), lineWidth: 1))
+        .padding(30)
+        .background(LinearGradient(colors: [Color(red: 0.12, green: 0.55, blue: 0.75), Color(red: 0.46, green: 0.32, blue: 0.80)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .environment(\.colorScheme, .dark)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        guard let img = renderer.nsImage, let tiff = img.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) else { return }
+        try? png.write(to: url)
+        print("wrote \(url.path)")
+    }
+}
+
 // MARK: - Secondary widgets gallery
 
 extension Gallery {
