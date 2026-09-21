@@ -55,6 +55,7 @@ Bars, rings and numbers animate between timeline updates. During a Claude incide
 
 ```bash
 brew tap akito8639/tap
+brew trust akito8639/tap          # third-party taps must be trusted once
 brew install --cask orbit-for-claude-code
 ```
 
@@ -120,7 +121,7 @@ Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の
 - **タップ**: Usage → claude.ai の使用量ページ、Sessions の行 → そのセッションをデスクトップ版で開く、Status → status.claude.com、Today → 即時更新
 - **デザイン**: Glass Orbit / Pace Bars / Console。macOS 26 の着色・クリア表示に対応。更新時はバーや数字がアニメーション
 - **動作要件**: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み
-- **インストール**: `brew install --cask orbit-for-claude-code`、または Releases の zip
+- **インストール**: `brew tap akito8639/tap && brew trust akito8639/tap && brew install --cask orbit-for-claude-code`、または Releases の zip
 - 「token expired」が出たら、ターミナルで `claude` を一度起動して `/login`（`ANTHROPIC_API_KEY` を設定している場合は `env -u ANTHROPIC_API_KEY claude`）。`claude setup-token` のトークンと API キーは使えません
 - 表示項目は設定ですべて ON / OFF。UI はシステム言語に追従（英語 / 日本語 / 簡体字中国語 / 韓国語）。ウィジェットだけ英語に固定する設定あり
 - 非公式プロジェクトで、Anthropic とは無関係です

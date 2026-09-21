@@ -1,6 +1,6 @@
 # Homebrew Cask template. Lives in your tap repository as Casks/orbit-for-claude-code.rb
 # (e.g. github.com/akito8639/homebrew-tap). Users install with:
-#   brew tap akito8639/tap && brew install --cask orbit-for-claude-code
+#   brew tap akito8639/tap && brew trust akito8639/tap && brew install --cask orbit-for-claude-code
 #
 # Update `version` and `sha256` (from sha256.txt on the GitHub release) for each release.
 cask "orbit-for-claude-code" do
