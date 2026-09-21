@@ -375,19 +375,20 @@ struct TodayWidgetView: View {
                     Text(L("tokens")).font(fonts.cap(10)).foregroundStyle(.white.opacity(0.6))
                     Spacer(minLength: 0)
                     HStack {
-                        Text(String(format: "$%.2f", t.estimatedCostUSD)).font(fonts.body(12, .semibold)).foregroundStyle(Palette.claude).animatedNumber(t.estimatedCostUSD)
+                        Text(Fmt.cost(t.estimatedCostUSD)).font(fonts.body(12, .semibold)).foregroundStyle(Palette.claude).animatedNumber(t.estimatedCostUSD)
                         Spacer()
                         Text("\(t.messages) " + L("msgs")).font(fonts.cap()).foregroundStyle(.white.opacity(0.6)).animatedNumber(t.messages)
                     }
                 } else {
-                    HStack(spacing: 12) {
+                    // Six cells in ~300pt: values shrink before they truncate (a heavy day reads "232M … $145").
+                    HStack(spacing: 10) {
                         stat(Fmt.tokens(t.totalTokens), L("tokens"), big: true)
                         stat(Fmt.tokens(t.inputTokens), "in")
                         stat(Fmt.tokens(t.outputTokens), "out")
                         stat(Fmt.tokens(t.cacheReadTokens), "cache")
                         stat("\(t.messages)", L("msgs"))
                         Spacer(minLength: 0)
-                        stat(String(format: "$%.2f", t.estimatedCostUSD), L("API est."), accent: true)
+                        stat(Fmt.cost(t.estimatedCostUSD), L("API est."), accent: true)
                     }
                     if !models.isEmpty {
                         let maxRows = size == .large ? 8 : 3
@@ -423,7 +424,7 @@ struct TodayWidgetView: View {
 
     private func stat(_ v: String, _ l: String, big: Bool = false, accent: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(v).font(fonts.body(big ? 16 : 12, .bold)).monospacedDigit().foregroundStyle(accent ? Palette.claude : .white).lineLimit(1).animatedNumber(v)
+            Text(v).font(fonts.body(big ? 16 : 12, .bold)).monospacedDigit().foregroundStyle(accent ? Palette.claude : .white).lineLimit(1).minimumScaleFactor(0.7).animatedNumber(v)
             Text(l).font(fonts.cap(9)).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
         }
     }

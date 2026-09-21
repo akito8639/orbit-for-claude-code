@@ -414,10 +414,17 @@ enum Fmt {
         return "\(s / 86400)d \((s % 86400) / 3600)h"
     }
 
+    /// "878K", "33.3M", "232M" — one decimal only while it still fits a stat cell.
     static func tokens(_ n: Int) -> String {
+        if n >= 100_000_000 { return String(format: "%.0fM", Double(n) / 1_000_000) }
         if n >= 1_000_000 { return String(format: "%.1fM", Double(n) / 1_000_000) }
         if n >= 1_000 { return String(format: "%.0fK", Double(n) / 1_000) }
         return "\(n)"
+    }
+
+    /// "$14.20", "$145" — cents are dropped once the estimate reaches three figures.
+    static func cost(_ usd: Double) -> String {
+        usd >= 100 ? String(format: "$%.0f", usd) : String(format: "$%.2f", usd)
     }
 
     static func percent(_ v: Double) -> String { "\(Int(v.rounded()))%" }

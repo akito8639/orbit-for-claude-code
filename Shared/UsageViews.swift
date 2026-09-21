@@ -398,7 +398,7 @@ struct ExtrasDetail: View {
                         stat(Fmt.tokens(t.outputTokens), "out")
                         stat(Fmt.tokens(t.cacheReadTokens), "cache")
                         stat("\(t.messages)", L("msgs"))
-                        stat(String(format: "$%.2f", t.estimatedCostUSD), L("API est."))
+                        stat(Fmt.cost(t.estimatedCostUSD), L("API est."))
                     }
                 }
             }
@@ -408,8 +408,8 @@ struct ExtrasDetail: View {
 
     private func stat(_ v: String, _ l: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(v).font(body1.weight(.semibold)).monospacedDigit().animatedNumber(v)
-            Text(l).font(cap).foregroundStyle(.white.opacity(0.5))
+            Text(v).font(body1.weight(.semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7).animatedNumber(v)
+            Text(l).font(cap).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
         }
     }
 }
