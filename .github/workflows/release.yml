@@ -52,6 +52,21 @@ jobs:
             OTHER_CODE_SIGN_FLAGS="--timestamp" build
           codesign -d --entitlements :- "build/Build/Products/Release/Orbit for Claude Code.app" | grep -c get-task-allow && { echo "get-task-allow still present"; exit 1; } || true
 
+      - name: Re-sign Sparkle and the bundle (Developer ID, hardened runtime, secure timestamp)
+        run: |
+          APP="build/Build/Products/Release/Orbit for Claude Code.app"
+          ID="Developer ID Application"
+          FW="$APP/Contents/Frameworks/Sparkle.framework"
+          # Sparkle ships its helpers signed by the Sparkle project; notarization wants our identity on everything.
+          for b in "$FW/Versions/B/XPCServices/Installer.xpc" "$FW/Versions/B/XPCServices/Downloader.xpc" \
+                   "$FW/Versions/B/Autoupdate" "$FW/Versions/B/Updater.app"; do
+            [ -e "$b" ] && codesign -f -o runtime --timestamp --preserve-metadata=entitlements -s "$ID" "$b"
+          done
+          codesign -f -o runtime --timestamp -s "$ID" "$FW"
+          codesign -f -o runtime --timestamp --preserve-metadata=entitlements -s "$ID" "$APP/Contents/PlugIns/OrbitWidget.appex"
+          codesign -f -o runtime --timestamp --preserve-metadata=entitlements -s "$ID" "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
       - name: Notarize and staple
         env:
           APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
