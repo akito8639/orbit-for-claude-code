@@ -255,14 +255,14 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let worst = snapshot.worstWindow(visible: Set(options.visibleWindows(snapshot).map(\.id)))
-        // One Text with inline images keeps icon and digits on the same baseline in the menu bar.
-        let mark = Text(Image(systemName: "asterisk"))
-        let value = Text(worst.map { Fmt.percent($0.utilization) } ?? "Orbit")
+        // Label is what MenuBarExtra lays out correctly (icon + title on one baseline); inline images get dropped.
         let incident = (snapshot.serviceStatus.map { !$0.isHealthy } ?? false) && options[.showServiceStatus]
-        let alert = incident ? Text(" ") + Text(Image(systemName: "exclamationmark.triangle.fill")) : Text("")
-        (mark + Text(" ") + value + alert)
-            .font(.system(size: 13, weight: .medium))
-            .monospacedDigit()
+        let title = (worst.map { Fmt.percent($0.utilization) } ?? "Orbit") + (incident ? " ⚠︎" : "")
+        Label {
+            Text(title).monospacedDigit()
+        } icon: {
+            Image(systemName: "asterisk")
+        }
     }
 }
 
