@@ -25,19 +25,38 @@ struct UsageProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UsageEntry>) -> Void) {
         let options = options()
-        // Record the real widget size per family (read back with `ClaudeUsage --sizes`).
+        // Record the real widget size per family (read back with `--sizes`).
         AppSettings.defaults.set("\(Int(context.displaySize.width))x\(Int(context.displaySize.height))", forKey: "debug_size_\(context.family)")
-        let snap = SnapshotStore.load() ?? UsageSnapshot(
-            fetchedAt: .now, windows: [], extraUsage: nil, profile: nil, serviceStatus: nil,
+        var snap = SnapshotStore.load() ?? UsageSnapshot(
+            fetchedAt: .distantPast, windows: [], extraUsage: nil, profile: nil, serviceStatus: nil,
             sessions: [], today: nil, tokenState: .missing,
-            errorMessage: "Open ClaudeUsage to fetch"
+            errorMessage: L("Open Orbit to fetch")
         )
-        // Re-render every few minutes so the pace marker and clock move without a network call.
         let now = Date.now
-        let entries = (0..<12).map { i in
-            UsageEntry(date: now.addingTimeInterval(Double(i) * 300), snapshot: snap, options: options)
+        // The app refreshes every `refreshMinutes`. If the snapshot is older than twice that, the app is probably
+        // not running: fetch usage and status here with the shared access token (sessions/today stay as they were).
+        let stale = now.timeIntervalSince(snap.fetchedAt) > Double(options.refreshMinutes * 2 * 60)
+        if stale, let token = SharedToken.load(), token.expiresAt > now.addingTimeInterval(60) {
+            Task {
+                async let status: ServiceStatus? = options[.showServiceStatus] ? (try? await StatusAPI.fetch()) : nil
+                if let u = try? await ClaudeAPI.fetchUsage(token: token.accessToken) {
+                    snap.windows = u.windows; snap.extraUsage = u.extra; snap.rawUsageJSON = u.raw; snap.breakdown = u.breakdown
+                    snap.tokenState = .ok; snap.errorMessage = nil
+                }
+                if let st = await status { snap.serviceStatus = st }
+                snap.fetchedAt = now
+                try? SnapshotStore.save(snap)
+                completion(Self.timeline(snap, options: options, now: now, entries: 6))   // re-check in 30 min
+            }
+            return
         }
-        completion(Timeline(entries: entries, policy: .atEnd))
+        completion(Self.timeline(snap, options: options, now: now, entries: 12))
+    }
+
+    /// Entries every 5 minutes so the pace marker and clock move without a network call.
+    private static func timeline(_ snap: UsageSnapshot, options: DisplayOptions, now: Date, entries: Int) -> Timeline<UsageEntry> {
+        let list = (0..<entries).map { i in UsageEntry(date: now.addingTimeInterval(Double(i) * 300), snapshot: snap, options: options) }
+        return Timeline(entries: list, policy: .atEnd)
     }
 }
 

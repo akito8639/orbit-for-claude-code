@@ -26,6 +26,11 @@
 		B00000000000000000000017 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* L10n.swift */; };
 		B00000000000000000000018 /* ExtraWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* ExtraWidgetViews.swift */; };
 		B00000000000000000000019 /* ExtraWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* ExtraWidgetViews.swift */; };
+		B00000000000000000000020 /* Notifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000020 /* Notifier.swift */; };
+		B00000000000000000000021 /* ClaudeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* ClaudeAPI.swift */; };
+		B00000000000000000000022 /* ClaudeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* ClaudeAPI.swift */; };
+		B00000000000000000000023 /* SharedToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* SharedToken.swift */; };
+		B00000000000000000000024 /* SharedToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* SharedToken.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +74,9 @@
 		F00000000000000000000014 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		F00000000000000000000015 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		F00000000000000000000019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F00000000000000000000020 /* Notifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifier.swift; sourceTree = "<group>"; };
+		F00000000000000000000021 /* ClaudeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAPI.swift; sourceTree = "<group>"; };
+		F00000000000000000000022 /* SharedToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedToken.swift; sourceTree = "<group>"; };
 		F00000000000000000000016 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		F00000000000000000000017 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		F00000000000000000000018 /* ExtraWidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtraWidgetViews.swift; sourceTree = "<group>"; };
@@ -120,6 +128,8 @@
 				F00000000000000000000003 /* UsageViews.swift */,
 				F00000000000000000000017 /* L10n.swift */,
 				F00000000000000000000018 /* ExtraWidgetViews.swift */,
+				F00000000000000000000021 /* ClaudeAPI.swift */,
+				F00000000000000000000022 /* SharedToken.swift */,
 				F00000000000000000000016 /* Localizable.xcstrings */,
 			);
 			path = Shared;
@@ -132,6 +142,7 @@
 				F00000000000000000000005 /* Collector.swift */,
 				F00000000000000000000006 /* SettingsView.swift */,
 				F00000000000000000000013 /* Gallery.swift */,
+				F00000000000000000000020 /* Notifier.swift */,
 				F00000000000000000000015 /* AppIcon.icon */,
 				F00000000000000000000019 /* Info.plist */,
 				F00000000000000000000007 /* Orbit.entitlements */,
@@ -262,6 +273,9 @@
 				B00000000000000000000012 /* Gallery.swift in Sources */,
 				B00000000000000000000016 /* L10n.swift in Sources */,
 				B00000000000000000000018 /* ExtraWidgetViews.swift in Sources */,
+				B00000000000000000000020 /* Notifier.swift in Sources */,
+				B00000000000000000000021 /* ClaudeAPI.swift in Sources */,
+				B00000000000000000000023 /* SharedToken.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,6 +289,8 @@
 				B00000000000000000000010 /* ClaudeUsageWidget.swift in Sources */,
 				B00000000000000000000017 /* L10n.swift in Sources */,
 				B00000000000000000000019 /* ExtraWidgetViews.swift in Sources */,
+				B00000000000000000000022 /* ClaudeAPI.swift in Sources */,
+				B00000000000000000000024 /* SharedToken.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,7 +374,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/Orbit.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 25;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
@@ -383,7 +399,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/Orbit.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 25;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
@@ -406,7 +422,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widget/OrbitWidget.entitlements;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 25;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;
@@ -429,7 +445,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widget/OrbitWidget.entitlements;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 25;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;

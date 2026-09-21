@@ -43,11 +43,15 @@ enum SettingKey: String, CaseIterable {
     case forceEnglishWidgets = "force_english_widgets"
     case preferSessionNames = "prefer_session_names"
     case showCowork = "show_cowork"
+    case launchAtLogin = "launch_at_login"
+    case notifyLimits = "notify_limits"
+    case notifyWaiting = "notify_waiting"
+    case notifyIncidents = "notify_incidents"
     case autoRefreshToken = "auto_refresh_token"
 
     var defaultValue: Bool {
         switch self {
-        case .showOtherWindows, .forceEnglishWidgets: return false
+        case .showOtherWindows, .forceEnglishWidgets, .launchAtLogin: return false
         default: return true
         }
     }
@@ -70,6 +74,10 @@ enum SettingKey: String, CaseIterable {
         case .forceEnglishWidgets: return L("Widgets always in English")
         case .preferSessionNames: return L("Show session titles instead of folder names")
         case .showCowork: return L("Cowork sessions (desktop app)")
+        case .launchAtLogin: return L("Launch at login")
+        case .notifyLimits: return L("Notify when a limit passes the threshold")
+        case .notifyWaiting: return L("Notify when a session waits for you")
+        case .notifyIncidents: return L("Notify on Claude incidents")
         case .autoRefreshToken: return L("Refresh expired token automatically")
         }
     }
@@ -86,8 +94,26 @@ enum SettingKey: String, CaseIterable {
             return L("Local (~/.claude)")
         case .forceEnglishWidgets:
             return L("Display")
+        case .launchAtLogin:
+            return L("Startup")
+        case .notifyLimits, .notifyWaiting, .notifyIncidents:
+            return L("Notifications")
         case .autoRefreshToken:
             return L("Authentication")
+        }
+    }
+}
+
+enum SessionSort: String, CaseIterable, Identifiable {
+    case started      // newest session first
+    case updated      // most recent state change first
+    case name         // alphabetical
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .started: return L("Newest first")
+        case .updated: return L("Latest change first")
+        case .name: return L("By name")
         }
     }
 }
@@ -97,6 +123,18 @@ struct AppSettings {
 
     static let styleKey = "widget_style"
     static let refreshMinutesKey = "refresh_minutes"
+    static let notifyThresholdKey = "notify_threshold"
+    static let sessionSortKey = "session_sort"
+
+    static var sessionSort: SessionSort {
+        get { SessionSort(rawValue: defaults.string(forKey: sessionSortKey) ?? "") ?? .started }
+        set { defaults.set(newValue.rawValue, forKey: sessionSortKey) }
+    }
+
+    static var notifyThreshold: Int {
+        get { defaults.object(forKey: notifyThresholdKey) == nil ? 90 : defaults.integer(forKey: notifyThresholdKey) }
+        set { defaults.set(newValue, forKey: notifyThresholdKey) }
+    }
 
     static func bool(_ key: SettingKey) -> Bool {
         if defaults.object(forKey: key.rawValue) == nil { return key.defaultValue }
@@ -121,7 +159,7 @@ struct AppSettings {
     static func snapshot() -> DisplayOptions {
         var flags: [SettingKey: Bool] = [:]
         for k in SettingKey.allCases { flags[k] = bool(k) }
-        return DisplayOptions(flags: flags, style: style, refreshMinutes: refreshMinutes)
+        return DisplayOptions(flags: flags, style: style, refreshMinutes: refreshMinutes, sessionSort: sessionSort)
     }
 }
 
@@ -129,6 +167,15 @@ struct DisplayOptions: Hashable {
     var flags: [SettingKey: Bool]
     var style: WidgetStyle
     var refreshMinutes: Int
+    var sessionSort: SessionSort = .started
+
+    func sortedSessions(_ s: [LocalSession]) -> [LocalSession] {
+        switch sessionSort {
+        case .started: return s.sorted { ($0.startedAt ?? .distantPast) > ($1.startedAt ?? .distantPast) }
+        case .updated: return s.sorted { ($0.statusUpdatedAt ?? $0.startedAt ?? .distantPast) > ($1.statusUpdatedAt ?? $1.startedAt ?? .distantPast) }
+        case .name: return s.sorted { $0.displayName(self).localizedCaseInsensitiveCompare($1.displayName(self)) == .orderedAscending }
+        }
+    }
 
     subscript(_ key: SettingKey) -> Bool { flags[key] ?? key.defaultValue }
 

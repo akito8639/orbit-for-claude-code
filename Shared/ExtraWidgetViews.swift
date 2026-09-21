@@ -70,7 +70,7 @@ struct SessionsWidgetView: View {
     var linksEnabled: Bool = true   // false for offscreen rendering (ImageRenderer cannot draw Link)
 
     private var fonts: StyleFonts { StyleFonts(options.style) }
-    private var sessions: [LocalSession] { snapshot.sessions }
+    private var sessions: [LocalSession] { options.sortedSessions(snapshot.sessions) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {

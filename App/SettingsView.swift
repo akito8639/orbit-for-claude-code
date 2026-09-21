@@ -41,6 +41,18 @@ struct SettingsView: View {
                     }
                 }
             }
+            Section(L("Sessions") + " · " + L("Sort order")) {
+                Picker(L("Sort order"), selection: Binding(get: { AppSettings.sessionSort }, set: { AppSettings.sessionSort = $0; store.settingsChanged() })) {
+                    ForEach(SessionSort.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+            }
+            Section(L("Notifications") + " · " + L("Threshold")) {
+                Picker(L("Notify at"), selection: Binding(get: { AppSettings.notifyThreshold }, set: { AppSettings.notifyThreshold = $0; store.settingsChanged() })) {
+                    ForEach([70, 80, 90, 95, 100], id: \.self) { Text("\($0)%").tag($0) }
+                }
+                .pickerStyle(.segmented)
+            }
             Section(L("Refresh")) {
                 Stepper(L("Fetch interval: %d min", refreshMinutes), value: $refreshMinutes, in: 1...60)
                     .onChange(of: refreshMinutes) { _, v in AppSettings.refreshMinutes = v; store.settingsChanged() }

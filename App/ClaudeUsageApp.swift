@@ -2,6 +2,7 @@ import SwiftUI
 import WidgetKit
 import AppKit
 import Combine
+import ServiceManagement
 
 @MainActor
 final class UsageStore: ObservableObject {
@@ -17,6 +18,7 @@ final class UsageStore: ObservableObject {
     private var sessionTimer: Timer?
 
     func start() {
+        Notifier.shared.prepare()
         // Cheap poll of ~/.claude/sessions so the activity lamps follow Claude Code within ~20 s.
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             Task { await self?.pollSessions() }
@@ -60,7 +62,20 @@ final class UsageStore: ObservableObject {
         Task { @MainActor in
             options = AppSettings.snapshot()
             reschedule()
+            Self.syncLoginItem(options[.launchAtLogin])
+            Notifier.shared.prepare()
             WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    /// Registers/unregisters the app as a login item (System Settings → General → Login Items).
+    static func syncLoginItem(_ enabled: Bool) {
+        let service = SMAppService.mainApp
+        do {
+            if enabled, service.status != .enabled { try service.register() }
+            if !enabled, service.status == .enabled { try service.unregister() }
+        } catch {
+            NSLog("Orbit: login item change failed: %@", error.localizedDescription)
         }
     }
 
@@ -76,7 +91,9 @@ final class UsageStore: ObservableObject {
         }
         let changed = merged.map { "\($0.id)|\($0.status ?? "")|\($0.waitingFor ?? "")|\($0.name ?? "")" } != old.map { "\($0.id)|\($0.status ?? "")|\($0.waitingFor ?? "")|\($0.name ?? "")" }
         guard changed else { return }
+        let previous = snapshot
         snapshot.sessions = merged
+        Notifier.shared.evaluate(old: previous, new: snapshot, options: options)
         try? SnapshotStore.save(snapshot)
         WidgetCenter.shared.reloadTimelines(ofKind: "OrbitSessionsWidget")
         WidgetCenter.shared.reloadTimelines(ofKind: AppConstants.widgetKind)
@@ -88,7 +105,9 @@ final class UsageStore: ObservableObject {
         defer { isRefreshing = false }
         options = AppSettings.snapshot()
         let report = await Collector.collect(options: options, forceTokenRefresh: forceTokenRefresh)
+        let previous = snapshot
         snapshot = report.snapshot
+        Notifier.shared.evaluate(old: previous, new: snapshot, options: options)
         if let c = report.credentials {
             let where_ = c.service ?? c.fileURL?.path ?? "?"
             let df = DateFormatter(); df.dateStyle = .short; df.timeStyle = .short
@@ -216,6 +235,10 @@ struct ClaudeUsageApp: App {
             for s in LocalScanner.runningSessions(includeContext: false) {
                 print("\(s.projectName) | name=\(s.name ?? "-") | status=\(s.status ?? "-") | waitingFor=\(s.waitingFor ?? "-") | host=\(s.hostSessionId ?? "-")")
             }
+            exit(0)
+        }
+        if args.contains("--shared-token") {
+            if let e = SharedToken.load() { print("shared token present, expires \(e.expiresAt)") } else { print("no shared token") }
             exit(0)
         }
         if args.contains("--raw") {
