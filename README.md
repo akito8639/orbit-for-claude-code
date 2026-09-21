@@ -1,14 +1,52 @@
-# Orbit for Claude Code
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="Orbit icon">
+</p>
 
-A macOS menu bar app and WidgetKit widget for **Claude Code** usage: the 5-hour and weekly limits, per-model weekly caps (e.g. Fable), a pace marker that shows whether you are burning through the window faster than linear, Claude service status, running Claude Code sessions and today's token volume from local logs. Three looks (Liquid Glass rings, pace bars, console), Small / Medium / Large widgets.
+<h1 align="center">Orbit for Claude Code</h1>
 
-![Widget gallery](docs/gallery.png)
+<p align="center">
+  A macOS menu bar app and a set of desktop widgets for <b>Claude Code</b>: usage limits with a pace marker, live session activity, context windows, Cowork sessions, Claude service status and today's local token volume.<br>
+  macOS 26+ · Liquid Glass · English / 日本語 / 简体中文 / 한국어 · MIT
+</p>
 
-Five widgets in one app, so you can place the ones you need side by side: **Usage** (limits and pace), **Sessions** (running Claude Code sessions with live activity), **Cowork** (recent Cowork sessions from the desktop app), **Claude status** (status.claude.com by component) and **Today** (local tokens and cost by model).
+![Usage widget in the three designs, Small / Medium / Large](docs/gallery.jpg)
 
-![Secondary widgets](docs/gallery-extras.png)
+> **Unofficial.** Not affiliated with Anthropic. Orbit reads the OAuth token Claude Code stores in your keychain and calls the same undocumented endpoints Claude Code uses for `/usage`; those can change without notice.
 
-> **Unofficial.** Not affiliated with Anthropic. It reads Claude Code's own OAuth token from your keychain and calls the same undocumented endpoints Claude Code uses for `/usage`; those can change without notice.
+## Widgets
+
+Five widgets in one app. Place the ones you need side by side; they share one design setting so they look like a set.
+
+| Widget | Sizes | Shows | Tap |
+|---|---|---|---|
+| **Usage** | S / M / L | 5-hour and weekly limits, per-model weekly caps (Fable / Opus / Sonnet), pace marker, weekly usage by surface, status, sessions, today | claude.ai usage page |
+| **Sessions** | S / M / L | Running Claude Code sessions with a live activity lamp, title or folder, where it was started, uptime, and each session's context window (used / limit, cached vs fresh) | Opens that session in the Claude desktop app, or the folder in Finder for terminal sessions |
+| **Cowork** | S / M / L | Recent Cowork sessions from the desktop app: title, last activity, model | Claude app |
+| **Claude status** | S / M | status.claude.com: overall state, every component, open incidents. Incidents get a warning halo | status.claude.com |
+| **Today** | S / M | Tokens (in / out / cache), messages, API-equivalent cost, breakdown by model, cache hit rate | Refresh now |
+
+![Sessions, Cowork, status and today widgets](docs/gallery-extras.jpg)
+
+### Reading the widgets
+
+- **Pace marker** — the white tick on a bar or ring is the elapsed fraction of the window. Usage 10 points above it is *above target* (orange), 25 points above is *well above target* (red). Anthropic's own `severity` flag can raise the level but never lower it.
+- **Activity lamps** — orange: working · red: waiting for you (permission prompt or input) · green: idle · grey: unknown. Same source as the desktop app's indicator (`~/.claude/sessions`), polled every 20 seconds; widgets reload only when something changed.
+- **Context window** — "566.4k / 1M (57%)" is the last turn's `input + cache_read` over the model's limit (200k or 1M), exactly what the desktop app shows. The bar splits cached prompt (blue), cache writes (green) and fresh input (orange).
+- **Entry icon** before a session name: terminal, desktop app window, `</>` for IDE extensions, box for the Agent SDK, two people for Cowork, cloud for remote.
+
+### Menu bar
+
+The menu bar item shows the worst window (`✱ 45%`, plus ⚠︎ during a Claude incident). Its panel is the Medium widget with a design switch, refresh, settings and quit.
+
+![Menu bar panel](docs/menubar.jpg)
+
+### Designs
+
+**Glass Orbit** (default) — concentric rings, inner 5-hour, outer the most constraining weekly cap; both numbers inside. **Pace Bars** — capsule bars with pace markers. **Console** — monospace, `❯ claude /usage`. All three adapt to the tinted / clear widget styles of macOS 26.
+
+Bars, rings and numbers animate between timeline updates. During a Claude incident the status widget gets a halo, the menu bar lamp pulses and the menu bar item shows ⚠︎:
+
+![Status widget during an incident](docs/incident.png)
 
 ## Requirements
 
@@ -24,75 +62,51 @@ brew install --cask orbit-for-claude-code
 
 Or download `Orbit-for-Claude-Code-<version>.zip` from Releases, unzip and move the app to `/Applications`.
 
-1. Launch Orbit. It lives in the menu bar as `✱ 45%`.
+1. Launch Orbit. It lives in the menu bar as `✱ 45%` and opens Settings on first run.
 2. If it says *token expired*, run `claude` once in a terminal and `/login`. If `ANTHROPIC_API_KEY` is set in your shell, run `env -u ANTHROPIC_API_KEY claude` instead, otherwise the CLI uses the API key and never refreshes the OAuth token.
-3. Right-click the desktop → **Edit Widgets** → search *Orbit* → add any of the four widgets in Small, Medium or Large.
-4. Menu bar ✱ → gear opens Settings: toggles for every piece of information, the three designs, refresh interval. The UI follows the system language (English, 日本語, 简体中文, 한국어); a toggle keeps the widgets in English regardless.
+3. Right-click the desktop → **Edit Widgets** → search *Orbit* → add any of the five widgets.
+4. Menu bar ✱ → gear opens Settings: every piece of information has a switch, plus the three designs, refresh interval, session titles vs folder names, and an English-only option for widgets.
 
-Only the OAuth token Claude Code stores at login works. `claude setup-token` tokens lack the `user:profile` scope (403) and API keys (`sk-ant-api…`) cannot read plan limits.
+Only the OAuth token Claude Code stores at login works. `claude setup-token` tokens lack the `user:profile` scope (403) and API keys (`sk-ant-api…`) cannot read plan limits. Access tokens expire after about eight hours; by default Orbit refreshes them with the refresh token and writes the result back to the same keychain item Claude Code uses.
 
-## What it shows (each switchable in Settings)
+## Data sources
 
 | Item | Source |
 |---|---|
-| 5-hour and weekly utilization, reset times, pace marker | `api.anthropic.com/api/oauth/usage` (`limits` array) |
-| Per-model weekly caps (Fable / Opus / Sonnet), API severity | same, `weekly_scoped` limits |
-| Weekly usage by surface (Claude Code / chat / Cowork) | same, `seven_day_breakdown` |
-| Extra usage credits | same, `extra_usage` |
+| 5-hour / weekly utilization, reset times, per-model caps, severity | `api.anthropic.com/api/oauth/usage` (`limits` array) |
+| Weekly usage by surface, extra usage credits | same (`seven_day_breakdown`, `extra_usage`) |
 | Account e-mail, plan badge (MAX 20x) | `/api/oauth/profile` + keychain item |
-| Service status, Claude Code component, incidents, per-component dots | `status.claude.com/api/v2/summary.json` |
-| Running Claude Code sessions: live activity lamp (working / input needed / permission / idle, same source as the desktop app), title or folder name, uptime, version, and each session's context window (used / limit, cached vs fresh) | `~/.claude/sessions/*.json` (pid liveness checked) + the tail of each session's transcript in `~/.claude/projects` |
-| Recent Cowork sessions (title, last activity, model) | `~/Library/Application Support/Claude/local-agent-mode-sessions` |
-| Today's tokens (input / output / cache) and API-equivalent cost | `~/.claude/projects/**/*.jsonl` modified today, deduplicated by message id |
+| Service status, components, incidents | `status.claude.com/api/v2/summary.json` |
+| Running sessions, activity, title, entrypoint | `~/.claude/sessions/*.json` (pid liveness checked) |
+| Context window per session | tail of `~/.claude/projects/<cwd>/<session>.jsonl` |
+| Cowork sessions | `~/Library/Application Support/Claude/local-agent-mode-sessions` |
+| Today's tokens and cost | `~/.claude/projects/**/*.jsonl` modified today, deduplicated by message id |
 
-Tapping a widget: **Usage** opens the usage page on claude.ai, **Sessions** rows open that session in the Claude desktop app (`claude://code/continue?session=…`) or, for terminal sessions, the project folder in Finder, **Claude status** opens status.claude.com, **Today** refreshes immediately.
-
-The pace marker is the elapsed fraction of the window. Usage 10 points above it is *above target* (orange), 25 points above is *well above target* (red).
+The token is sent only to `api.anthropic.com`. No telemetry. Local logs are aggregated on your Mac and never leave it.
 
 ## Build from source
 
 ```bash
 git clone https://github.com/akito8639/orbit-for-claude-code.git
 cd orbit-for-claude-code
-cp Config.xcconfig Config.local.xcconfig   # then set DEVELOPMENT_TEAM to your Team ID
-open Orbit.xcodeproj                  # ⌘R
+cp Config.xcconfig Config.local.xcconfig   # set DEVELOPMENT_TEAM to your Team ID
+open Orbit.xcodeproj                        # ⌘R
 ```
 
 `Config.local.xcconfig` is git-ignored and overrides `Config.xcconfig` (Team ID, App Group, bundle id prefix). The App Group must be `<TeamID>.<something>`; the code reads it from the signed entitlements at runtime.
 
-Command line:
-
-```bash
-xcodebuild -project Orbit.xcodeproj -scheme Orbit -configuration Release -derivedDataPath build build
-open "build/Build/Products/Release/Orbit for Claude Code.app"
 ```
-
-### Layout
-
-```
-Shared/   models, settings keys, the three designs, Localizable.xcstrings (en / ja / zh-Hans / ko) — used by app and widget
-App/      menu bar app: collector (keychain / API / status / ~/.claude), settings window, offscreen gallery renderer
-Widget/   WidgetKit extension (Small / Medium / Large)
+Shared/   models, settings, the three designs, secondary widget views, Localizable.xcstrings (app + widget)
+App/      menu bar app: collector (keychain / API / status / ~/.claude), settings, URL routing, gallery renderer, AppIcon.icon
+Widget/   WidgetKit bundle (Usage, Sessions, Cowork, Claude status, Today)
 homebrew/ Cask template for your tap
 .github/  CI build; tag-triggered signed + notarized release
-docs/     design proposal, gallery, distribution notes
+docs/     design proposal, renders, distribution notes
 ```
 
-### Debug flags
+Render flags for previews: `--render out.png [--live]`, `--render-extras out.png [--live] [--incident]`, `--render-panel out.png`, `--render-settings out.png`, `--render-icon out.png`, `--render-icon-bundle App/AppIcon.icon`, plus `--style glassOrbit|paceBars|console`. Diagnostics: `--fetch [--refresh-token]`, `--raw`, `--sessions`, `--sizes`, `--reload`.
 
-`"Orbit for Claude Code" --fetch` (one-shot collection without UI), `--raw` (last raw usage JSON), `--sizes` (widget sizes recorded by the extension), `--reload` (reload widget timelines), `--render out.png [--live]` (render every design × size).
-
-## How it works
-
-1. The app finds the freshest `Claude Code-credentials*` keychain item (or `~/.claude/.credentials.json`) via `/usr/bin/security`.
-2. Usage, profile, status page and local scans run in parallel and are written as `snapshot.json` into the App Group container; `WidgetCenter.reloadAllTimelines()` follows.
-3. The widget only reads the snapshot. Its timeline re-renders every five minutes so the pace marker and clock move without network access.
-
-Access tokens expire after roughly eight hours. By default the app refreshes an expired token with the refresh token and writes the result back to the same keychain item Claude Code uses (the refresh endpoint only accepts Claude Code's own user agent, which the app sends). Turn it off in Settings → 接続 if you would rather let the CLI handle it.
-
-## Privacy
-
-The token is sent only to `api.anthropic.com`. No telemetry. Local logs are aggregated on your Mac and never leave it.
+If the widget gallery does not pick up a new build, `killall chronod NotificationCenter` refreshes it.
 
 ## License
 
@@ -102,12 +116,13 @@ MIT — see [LICENSE](LICENSE).
 
 ## 日本語
 
-Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別週間枠）をペース目印付きで表示する、macOS のメニューバーアプリ＋ウィジェットです。Claude の稼働状況、起動中の Claude Code セッション、今日のトークン量も表示できます。デザインは 3 種類（Liquid Glass のリング / ペースバー / コンソール）。
+Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の週間枠）をペース目印付きで表示する、macOS のメニューバーアプリ＋ウィジェット集です。
 
-- 動作要件: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み
-- インストール: 上記の `brew install --cask orbit-for-claude-code`、または Releases の zip
-- 「token expired」が出たら、ターミナルで `claude` を一度起動（`ANTHROPIC_API_KEY` を設定している場合は `env -u ANTHROPIC_API_KEY claude`）
-- `claude setup-token` のトークンと API キーは使えません（スコープ不足 / プラン上限は読めない）
-- ウィジェットは 4 種類（Usage / Sessions / Claude status / Today）。必要なものを並べて置けます
-- 表示項目は設定ですべて ON / OFF できます。UI はシステム言語に追従（英語 / 日本語 / 簡体字中国語 / 韓国語）。ウィジェットだけ英語に固定する設定あり
+- **ウィジェットは 5 種類**: Usage（使用量）、Sessions（起動中セッション。処理中 / 入力待ち / 待機のランプ、コンテキストウィンドウ）、Cowork（デスクトップ版の Cowork セッション）、Claude status（稼働状況。障害時は赤いハロー）、Today（今日のトークン量と API 換算コスト）
+- **タップ**: Usage → claude.ai の使用量ページ、Sessions の行 → そのセッションをデスクトップ版で開く、Status → status.claude.com、Today → 即時更新
+- **デザイン**: Glass Orbit / Pace Bars / Console。macOS 26 の着色・クリア表示に対応。更新時はバーや数字がアニメーション
+- **動作要件**: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み
+- **インストール**: `brew install --cask orbit-for-claude-code`、または Releases の zip
+- 「token expired」が出たら、ターミナルで `claude` を一度起動して `/login`（`ANTHROPIC_API_KEY` を設定している場合は `env -u ANTHROPIC_API_KEY claude`）。`claude setup-token` のトークンと API キーは使えません
+- 表示項目は設定ですべて ON / OFF。UI はシステム言語に追従（英語 / 日本語 / 簡体字中国語 / 韓国語）。ウィジェットだけ英語に固定する設定あり
 - 非公式プロジェクトで、Anthropic とは無関係です
