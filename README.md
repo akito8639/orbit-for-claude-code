@@ -63,7 +63,7 @@ brew trust akito8639/tap          # third-party taps must be trusted once
 brew install --cask orbit-for-claude-code
 ```
 
-Or download `Orbit-for-Claude-Code-<version>.zip` from Releases, unzip and move the app to `/Applications`.
+Or download the latest `Orbit-for-Claude-Code-<version>.zip` from the [Releases page](https://github.com/akito8639/orbit-for-claude-code/releases/latest), unzip it and move the app to `/Applications`. The app is signed with a Developer ID and notarized, so it opens without Gatekeeper warnings.
 
 1. Launch Orbit. It lives in the menu bar as `✱ 45%` and opens Settings on first run.
 2. If it says *token expired*, run `claude` once in a terminal and `/login`. If `ANTHROPIC_API_KEY` is set in your shell, run `env -u ANTHROPIC_API_KEY claude` instead, otherwise the CLI uses the API key and never refreshes the OAuth token.
@@ -125,7 +125,7 @@ Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の
 - **タップ**: Usage → claude.ai の使用量ページ、Sessions の行 → そのセッションをデスクトップ版で開く、Status → status.claude.com、Today → 即時更新
 - **デザイン**: Glass Orbit / Pace Bars / Console。macOS 26 の着色・クリア表示に対応。更新時はバーや数字がアニメーション
 - **動作要件**: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み
-- **インストール**: `brew tap akito8639/tap && brew trust akito8639/tap && brew install --cask orbit-for-claude-code`、または Releases の zip
+- **インストール**: `brew tap akito8639/tap && brew trust akito8639/tap && brew install --cask orbit-for-claude-code`、または [Releases ページ](https://github.com/akito8639/orbit-for-claude-code/releases/latest)の zip を展開して「アプリケーション」フォルダへ
 - 「token expired」が出たら、ターミナルで `claude` を一度起動して `/login`（`ANTHROPIC_API_KEY` を設定している場合は `env -u ANTHROPIC_API_KEY claude`）。`claude setup-token` のトークンと API キーは使えません
 - 表示項目は設定ですべて ON / OFF。UI はシステム言語に追従（英語 / 日本語 / 簡体字中国語 / 韓国語）。ウィジェットだけ英語に固定する設定あり
 - 非公式プロジェクトで、Anthropic とは無関係です
