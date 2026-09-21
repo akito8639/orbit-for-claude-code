@@ -236,12 +236,11 @@ struct ClaudeUsageApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarPanel()
-                .environmentObject(store)
+            MenuBarMenu().environmentObject(store)
         } label: {
             MenuBarLabel(snapshot: store.snapshot, options: store.options)
         }
-        .menuBarExtraStyle(.window)
+        .menuBarExtraStyle(.menu)
 
         Settings {
             SettingsView().environmentObject(store)
@@ -266,53 +265,59 @@ struct MenuBarLabel: View {
     }
 }
 
-struct MenuBarPanel: View {
+/// Plain menu: usage lines, status, sessions, design switch, refresh, settings, quit.
+struct MenuBarMenu: View {
     @EnvironmentObject private var store: UsageStore
-    @State private var now = Date.now
-    private let tick = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
-    private var level: UsageLevel {
-        store.snapshot.worstWindow(at: now, visible: Set(store.options.visibleWindows(store.snapshot).map(\.id)))?.level(at: now) ?? .onTrack
-    }
+    private var snap: UsageSnapshot { store.snapshot }
+    private var opts: DisplayOptions { store.options }
 
     var body: some View {
-        VStack(spacing: 10) {
-            // Same layout and size as the Medium widget (344×164, 18pt content margins).
-            UsageDashboardView(snapshot: store.snapshot, options: store.options, size: .medium, now: now)
-                .padding(18)
-                .frame(width: 344, height: 164)
-                .background(DashboardBackground(style: store.options.style, level: level))
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .glassEffect(.regular.tint(Palette.level(level).opacity(0.15)), in: .rect(cornerRadius: 22))
-
-            if let err = store.snapshot.errorMessage {
-                Text(err).font(.caption).foregroundStyle(.secondary).lineLimit(2).frame(width: 344, alignment: .leading)
+        let windows = opts.visibleWindows(snap)
+        if windows.isEmpty {
+            Text(snap.errorMessage ?? L("Waiting for data…"))
+        } else {
+            ForEach(windows) { w in
+                let reset = opts[.showResetTimes] ? "  ·  " + Fmt.resetLabel(w.resetsAt) : ""
+                Text("\(w.title)  \(Fmt.percent(w.utilization))  \(w.level().label)\(reset)")
             }
-
-            VStack(spacing: 8) {
-                Picker("", selection: Binding(get: { store.options.style }, set: { AppSettings.style = $0; store.settingsChanged() })) {
-                    ForEach(WidgetStyle.allCases) { s in Text(s.title).tag(s) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(maxWidth: .infinity)
-
-                GlassEffectContainer(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Button { Task { await store.refresh() } } label: {
-                            Label(store.isRefreshing ? L("Refreshing…") : L("Refresh"), systemImage: "arrow.clockwise")
-                        }
-                        .disabled(store.isRefreshing)
-                        Spacer()
-                        Button { UsageStore.openSettingsWindow() } label: { Image(systemName: "gearshape") }
-                        Button { NSApp.terminate(nil) } label: { Image(systemName: "power") }
-                    }
-                    .buttonStyle(.glass)
-                }
-            }
-            .frame(width: 344)
         }
-        .padding(12)
-        .onReceive(tick) { now = $0 }
+        if opts[.showExtraUsage], let e = snap.extraUsage, e.isEnabled, let u = e.utilization {
+            Text(L("extra") + "  " + Fmt.percent(u))
+        }
+        Divider()
+        if opts[.showServiceStatus], let st = snap.serviceStatus {
+            Button(L("Claude status") + ": " + (st.isHealthy ? L("All systems operational") : st.description)) {
+                NSWorkspace.shared.open(URL(string: "https://status.claude.com")!)
+            }
+        }
+        if opts[.showSessions] {
+            let working = snap.sessions.filter { $0.activity == .working }.count
+            let waiting = snap.sessions.filter { $0.activity == .needsInput || $0.activity == .permission }.count
+            Button(L("Sessions") + ": \(snap.sessions.count)  (" + L("working") + " \(working), " + L("waiting for you") + " \(waiting))") {
+                AppDelegate.activateClaudeApp()
+            }
+        }
+        if opts[.showTodayUsage], let t = snap.today {
+            Text(L("Today") + ": " + Fmt.tokens(t.totalTokens) + " " + L("tokens") + String(format: "  ·  $%.2f", t.estimatedCostUSD))
+        }
+        if opts[.showProfile], let p = snap.profile {
+            Text([p.email, p.planBadge].compactMap { $0 }.joined(separator: "  ·  "))
+        }
+        Divider()
+        Picker(L("Design"), selection: Binding(get: { opts.style }, set: { AppSettings.style = $0; store.settingsChanged() })) {
+            ForEach(WidgetStyle.allCases) { s in Text(s.title).tag(s) }
+        }
+        Button(L("Open usage page")) { NSWorkspace.shared.open(URL(string: "https://claude.ai/settings/usage")!) }
+        Divider()
+        Button(store.isRefreshing ? L("Refreshing…") : L("Refresh")) { Task { await store.refresh() } }
+            .disabled(store.isRefreshing)
+            .keyboardShortcut("r")
+        Text(L("Updated %@", Fmt.relative(snap.fetchedAt)))
+        Button(L("Settings…")) { UsageStore.openSettingsWindow() }
+            .keyboardShortcut(",")
+        Divider()
+        Button(L("Quit Orbit")) { NSApp.terminate(nil) }
+            .keyboardShortcut("q")
     }
 }
