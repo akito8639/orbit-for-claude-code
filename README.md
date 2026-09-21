@@ -85,7 +85,7 @@ Only the OAuth token Claude Code stores at login works. `claude setup-token` tok
 | Cowork sessions | `~/Library/Application Support/Claude/local-agent-mode-sessions` |
 | Today's tokens and cost | `~/.claude/projects/**/*.jsonl` modified today, deduplicated by message id |
 
-The token is sent only to `api.anthropic.com`. No telemetry. Local logs are aggregated on your Mac and never leave it.
+The token is sent only to `api.anthropic.com`. No telemetry. Local logs are aggregated on your Mac and never leave it. Details in [docs/PRIVACY.md](docs/PRIVACY.md); release process in [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md).
 
 ## Build from source
 

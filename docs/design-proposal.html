@@ -45,7 +45,7 @@ pre{background:var(--code);border-radius:12px;padding:14px 16px;overflow-x:auto;
 <div class="wrap">
   <div class="eyebrow">Design proposal · macOS 27 · WidgetKit</div>
   <h1>Orbit for Claude Code — デザイン 3 案</h1>
-  <p class="lead">Claude Code の使用量をペース目標マーカー付きで表示する macOS ウィジェットです。3 案すべて実装済みで、設定の「デザイン」タブから切り替えられます。現在は Usage のほかに Sessions / Cowork / Claude status / Today の 4 ウィジェットも同じデザイン設定で描かれます。画像は実際のアプリがレンダリングした Small (164×164) / Medium (344×164) / Large (344×344) で、macOS 27 の実測サイズです。</p>
+  <p class="lead">Claude Code の使用量をペース目標マーカー付きで表示する macOS ウィジェットです。3 案すべて実装済みで、設定の「デザイン」タブから切り替えられます。現在は Usage のほかに Sessions / Cowork / Claude status / Today の 4 ウィジェットが加わり、5 種類すべてが同じデザイン設定で描かれます。画像は実際のアプリがレンダリングした Small (164×164) / Medium (344×164) / Large (344×344) で、macOS 27 の実測サイズです。</p>
 
   <div class="grid">
     <div class="card">
@@ -121,9 +121,10 @@ pre{background:var(--code);border-radius:12px;padding:14px 16px;overflow-x:auto;
 
   <div class="sec">
     <h2>導入手順</h2>
-    <pre>open Orbit.xcodeproj   # Xcode 27 で ⌘R（Config.local.xcconfig に自分の DEVELOPMENT_TEAM を設定）
-# 1. メニューバーに ✱ 85% のような表示が出る
-# 2. デスクトップを右クリック →「ウィジェットを編集」→ Orbit for Claude Code を追加
-# 3. トークンが期限切れなら、ターミナルで `claude` を一度起動するか、設定 → 接続 →「今すぐ更新して再取得」</pre>
+    <pre>brew tap akito8639/tap &amp;&amp; brew trust akito8639/tap
+brew install --cask orbit-for-claude-code
+# 1. メニューバーに ✱ 85% のような表示が出る（初回は設定が自動で開く）
+# 2. デスクトップを右クリック →「ウィジェットを編集」→「Orbit」で検索 → 5 種類から配置
+# 3. トークンが期限切れなら、ターミナルで `claude` を起動して /login</pre>
   </div>
 </div>

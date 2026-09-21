@@ -1,56 +1,49 @@
-# 一般公開に向けたチェックリスト
+# 配布とリリース手順
 
-## 開発者側で必要な設定
+## 現状（2026-09-21 時点）
 
-### 1. 署名と公証（必須）
-- Developer ID Application 証明書を発行し、Release 構成の `CODE_SIGN_IDENTITY` を "Developer ID Application" に変更
-- `ENABLE_HARDENED_RUNTIME = YES`（公証の必須条件。`security` の起動と `~/.claude` の読み取りは Hardened Runtime でも動作）
-- `xcrun notarytool submit` → `xcrun stapler staple` → DMG / zip
-- App Store 配布は不可（サンドボックス必須のため、Claude Code のキーチェーン項目と `~/.claude` を読めない）
+| 項目 | 状態 |
+|---|---|
+| 署名 | Developer ID Application（Hardened Runtime 有効、`get-task-allow` なし） |
+| 公証 | GitHub Actions（`release.yml`）で `notarytool` → ステープル。失敗時は公証ログを自動表示 |
+| 配布 | GitHub Releases の zip ＋ Homebrew tap `akito8639/tap`（cask `orbit-for-claude-code`） |
+| CI | push ごとに未署名ビルド（`build.yml`、macOS 26 ランナー） |
+| 設定の外出し | `Config.xcconfig`（Team ID / App Group / バンドル ID 接頭辞）。コードは署名済み entitlements から App Group を読む |
+| アイコン | Icon Composer 形式 `App/AppIcon.icon`（背景＋2 レイヤー） |
+| 多言語 | String Catalog（英語 / 日本語 / 簡体字中国語 / 韓国語）。ウィジェットのみ英語固定の設定あり |
+| 初回起動 | 使用量が無ければ設定を自動で開く |
 
-### 2. ハードコードの外出し
-- （対応済み）チーム ID と App Group は `Config.xcconfig` に集約。entitlements は `$(APP_GROUP_ID)`、コードは署名済み entitlements から実行時に読む
-  → ソース公開する場合は `Config.xcconfig` に `DEVELOPMENT_TEAM` / App Group を移し、README に置き換え手順を記載
-- `ClaudeAPI.clientID` は Claude Code の OAuth クライアント ID。第三者アプリでのトークン更新は規約上グレー
-  → 公開版では自動更新を削除するか、既定 OFF のまま免責を明記
-- usage / profile エンドポイントは非公開 API で予告なく変わり得る旨を README に明記
+## リリース手順
 
-### 3. ウィジェットを単独で動かす（強く推奨）
-- ログイン時起動: `SMAppService.mainApp.register()` のトグルを設定に追加
-- `keychain-access-groups` entitlement でアプリとウィジェットがキーチェーンを共有し、ウィジェット拡張が手動トークンで直接取得できるようにする（アプリ常駐が不要になる）
+1. `Orbit.xcodeproj` の `MARKETING_VERSION` を上げてコミット・push
+2. タグを打つと Release ワークフローが署名・公証・zip・GitHub Release 作成まで行う
 
-### 4. 体裁と初回体験
-- （対応済み）アプリアイコンは Icon Composer 形式 `App/AppIcon.icon`
-- （対応済み）初回起動で使用量が無ければ設定を自動で開く
-- （対応済み）String Catalog で英語 / 日本語 / 簡体字中国語 / 韓国語に対応
-- 名称は "○○ for Claude Code" の形にし、「Anthropic 非公式」を明記
-- 更新手段: GitHub Releases または Sparkle。Homebrew Cask があると導入が楽
+```bash
+git tag v1.0.1 && git push origin v1.0.1
+```
 
-### 5. プラン差への対応
-- Pro では Opus 別枠が返らない、Team / Enterprise では usage エンドポイントが使えない場合がある
-- 取得できない枠は非表示、エラー時は「Max / Pro の OAuth ログインが必要」と案内
-- 取得間隔は 1 分未満にできない制限を維持
+3. Release の `sha256.txt` の値で、`akito8639/homebrew-tap` の `Casks/orbit-for-claude-code.rb` の `version` と `sha256` を更新して push（このリポジトリの `homebrew/` は同じ内容のミラー）
+4. 動作確認: `brew update && brew upgrade --cask orbit-for-claude-code`
 
-### 6. プライバシー文書
-- PRIVACY.md: トークンは Anthropic のエンドポイントにのみ送信、テレメトリなし、ローカルログは端末内で集計するだけ
+必要な GitHub Secrets: `DEVELOPER_ID_P12`（.p12 の base64）、`DEVELOPER_ID_P12_PASSWORD`、`DEVELOPMENT_TEAM`、`NOTARY_APPLE_ID`（Developer Program に登録した Apple ID）、`NOTARY_PASSWORD`（App 用パスワード）。
 
-## 利用者向けの使い方
+## つまずきやすい点
 
-1. 動作要件: macOS 26 以降、Claude Pro または Max プラン
-2. インストール: DMG からアプリケーションフォルダへ。初回起動で「ログイン時に起動」を ON
-3. トークン設定
-   - ターミナルで `claude` を使っていれば自動検出。キーチェーンの許可ダイアログは「常に許可」
-   - 期限切れが出る場合はターミナルで `claude` を一度起動してログインし直す（`claude setup-token` のトークンはスコープ不足で使えない）
-4. ウィジェットの追加: デスクトップ右クリック → 「ウィジェットを編集…」→ 「Orbit」で検索 → 5 種類から配置
-5. 表示の調整: メニューバーの ✱ → 歯車。表示項目の ON/OFF、デザイン、取得間隔、日本語ラベル
-6. トラブル
-   - "token expired": ターミナルで `claude` を起動してログインし直す
-   - ウィジェットが更新されない: アプリが起動しているか確認
+- 公証で 401「account does not exist」→ Apple ID が Developer Program のものと違う
+- 公証で Invalid「requests get-task-allow」→ Release に `CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO` が要る（設定済み）
+- 開発版とリリース版を入れ替えた直後にウィジェットが空になる → `killall chronod NotificationCenter` か、ウィジェットのサイズ変更・置き直し
+- Homebrew の第三者 tap は初回に `brew trust akito8639/tap` が必要
 
-## 優先順位
+## 今後の候補
 
-1. Developer ID 署名 + Hardened Runtime + 公証
-2. ログイン時起動 + keychain-access-groups でウィジェット単独動作
-3. （アイコン・多言語は対応済み）オンボーディング
-4. xcconfig 化、PRIVACY.md、免責文
-5. Sparkle / Homebrew Cask
+- ログイン時起動（`SMAppService.mainApp.register()`）のトグル
+- `keychain-access-groups` でウィジェット拡張が単独で取得できるようにし、本体常駐を不要にする
+- 上限接近や入力待ちの通知
+- Sparkle による自動更新（現状は Homebrew か手動）
+- 中国語・韓国語のネイティブ校正
+
+## 利用者向けの要点
+
+- 動作要件: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み
+- 「token expired」→ ターミナルで `claude` を起動して `/login`（`ANTHROPIC_API_KEY` がある環境は `env -u ANTHROPIC_API_KEY claude`）。`claude setup-token` と API キーは使えない
+- 非公式プロジェクト。usage / profile エンドポイントは非公開 API で、予告なく変わり得る
