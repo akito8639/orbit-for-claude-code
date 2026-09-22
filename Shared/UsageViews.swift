@@ -213,30 +213,28 @@ struct ExtrasRow: View {
     var compact: Bool = false
     var mono: Bool = false
     var pulsing: Bool = false
+    var showStatusText: Bool = true   // false when the layout spells the status out elsewhere (console types it at the cursor); the lamp stays
 
     private var font: Font { mono ? .system(size: 10.5, design: .monospaced) : .system(size: 10.5, weight: .medium, design: .rounded) }
 
+    /// Compact rows hide the status text while everything is operational; once it appears it is long
+    /// ("Claude Code degraded performance"), so it gets a line of its own above the counts.
+    private var showsStatusText: Bool { showStatusText && !(compact && (snapshot.serviceStatus?.isHealthy ?? false)) }
+
     var body: some View {
-        HStack(spacing: compact ? 8 : 12) {
-            if options[.showServiceStatus] {
-                HStack(spacing: 4) {
-                    StatusDot(status: snapshot.serviceStatus, pulsing: pulsing)
-                    if !(compact && (snapshot.serviceStatus?.isHealthy ?? false)) { Text(statusText).lineLimit(1) }
+        Group {
+            if compact && options[.showServiceStatus] && showsStatusText {
+                VStack(alignment: .leading, spacing: 3) {
+                    status
+                    HStack(spacing: 8) { counts; Spacer(minLength: 0) }
+                }
+            } else {
+                HStack(spacing: compact ? 8 : 12) {
+                    if options[.showServiceStatus] { status }
+                    counts
+                    Spacer(minLength: 0)
                 }
             }
-            if options[.showSessions] {
-                HStack(spacing: 4) {
-                    Image(systemName: "terminal").font(.system(size: 9, weight: .bold))
-                    Text(L(snapshot.sessions.count == 1 ? "%d session" : "%d sessions", snapshot.sessions.count))
-                }
-            }
-            if options[.showTodayUsage], let t = snapshot.today {
-                HStack(spacing: 4) {
-                    Image(systemName: "sum").font(.system(size: 9, weight: .bold))
-                    Text(compact ? Fmt.tokens(t.totalTokens) : L("today") + " " + Fmt.tokens(t.totalTokens) + String(format: " · $%.1f", t.estimatedCostUSD)).animatedNumber(t.totalTokens)
-                }
-            }
-            Spacer(minLength: 0)
         }
         .font(font)
         .foregroundStyle(.white.opacity(0.75))
@@ -244,11 +242,31 @@ struct ExtrasRow: View {
         .minimumScaleFactor(0.8)
     }
 
-    private var statusText: String {
-        guard let s = snapshot.serviceStatus else { return L("status ?") }
-        if let cc = s.claudeCodeStatus, cc != "operational" { return "Claude Code " + cc.replacingOccurrences(of: "_", with: " ") }
-        return s.isHealthy ? L("operational") : s.description
+    private var status: some View {
+        HStack(spacing: 4) {
+            StatusDot(status: snapshot.serviceStatus, pulsing: pulsing)
+            if showsStatusText { Text(statusText).lineLimit(1) }
+        }
     }
+
+    @ViewBuilder private var counts: some View {
+        if options[.showSessions] {
+            HStack(spacing: 4) {
+                Image(systemName: "terminal").font(.system(size: 9, weight: .bold))
+                Text(L(snapshot.sessions.count == 1 ? "%d session" : "%d sessions", snapshot.sessions.count))
+            }
+            .fixedSize()
+        }
+        if options[.showTodayUsage], let t = snapshot.today {
+            HStack(spacing: 4) {
+                Image(systemName: "sum").font(.system(size: 9, weight: .bold))
+                Text(compact ? Fmt.tokens(t.totalTokens) : L("today") + " " + Fmt.tokens(t.totalTokens) + String(format: " · $%.1f", t.estimatedCostUSD)).animatedNumber(t.totalTokens)
+            }
+            .fixedSize()
+        }
+    }
+
+    private var statusText: String { snapshot.serviceStatus?.headline ?? L("status ?") }
 }
 
 /// Per-component status dots (claude.ai / API / Console / Claude Code / Cowork …), wrapping into rows.
@@ -769,11 +787,23 @@ struct ConsoleView: View {
         }
     }
 
-    private var cursor: some View {
+    /// The status line the compact rows would show, when there is something to say (an incident).
+    private var incident: String? {
+        guard options[.showServiceStatus], let s = snapshot.serviceStatus, !s.isHealthy else { return nil }
+        return s.headline
+    }
+
+    /// Idle prompt — or, during an incident, the status typed at the prompt as if it had just been entered.
+    /// `typing` is off in large, where the status section below spells the same thing out.
+    private func cursor(typing: Bool = true) -> some View {
         HStack(spacing: 6) {
             Text("❯").font(mono(12, .bold)).foregroundStyle(Palette.claude)
+            if typing, let incident {
+                Text(incident).font(mono(11)).foregroundStyle(Palette.status(snapshot.serviceStatus))
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
             RoundedRectangle(cornerRadius: 1).fill(ink.opacity(0.8)).frame(width: 7, height: 13)
-            Spacer()
+            Spacer(minLength: 4)
             RefreshStamp(text: Fmt.relative(snapshot.fetchedAt, now: now), font: mono(9.5), color: dim, refresh: refreshable)
         }
     }
@@ -811,8 +841,8 @@ struct ConsoleView: View {
             }
             summary
             Spacer(minLength: 0)
-            ExtrasRow(snapshot: snapshot, options: options, compact: true, mono: true, pulsing: !inWidget)
-            cursor
+            ExtrasRow(snapshot: snapshot, options: options, compact: true, mono: true, pulsing: !inWidget, showStatusText: incident == nil)
+            cursor()
         }
     }
 
@@ -827,7 +857,7 @@ struct ConsoleView: View {
             Rectangle().fill(dim.opacity(0.3)).frame(height: 1).padding(.vertical, 2)
             ExtrasDetail(snapshot: snapshot, options: options, mono: true, now: now)
             Spacer(minLength: 0)
-            cursor
+            cursor(typing: false)
         }
     }
 }

@@ -46,7 +46,9 @@ Bars, rings and numbers animate between timeline updates.
 
 ### During an incident
 
-When status.claude.com reports a problem, the status widget gets a warning halo, the affected component is called out, the menu bar lamp pulses and the menu bar item shows ⚠︎:
+When status.claude.com reports a problem, the status widget gets a warning halo, the affected component is called out, the menu bar lamp pulses and the menu bar item shows ⚠︎.
+
+The usage widgets say it too, next to their status lamp. The wording is long ("Claude Code degraded performance"), so it takes a line of its own above the session and token counts instead of squeezing them; Console types it at the prompt on the bottom line, as if it had just been entered.
 
 <img src="docs/status-incident.png" width="600" alt="Status widget during an incident">
 
@@ -108,7 +110,7 @@ homebrew/ Cask template for your tap
 docs/     design proposal, renders, distribution notes
 ```
 
-Render flags for previews: `--render out.png [--live]`, `--render-extras out.png [--live] [--incident]`, `--render-panel out.png`, `--render-settings out.png`, `--render-icon out.png`, `--render-icon-bundle App/AppIcon.icon`, plus `--style glassOrbit|paceBars|console`. Diagnostics: `--fetch [--refresh-token]`, `--raw`, `--sessions`, `--sizes`, `--reload`.
+Render flags for previews: `--render out.png [--live] [--incident]`, `--render-extras out.png [--live] [--incident]`, `--render-panel out.png`, `--render-settings out.png`, `--render-icon out.png`, `--render-icon-bundle App/AppIcon.icon`, plus `--style glassOrbit|paceBars|console`. Diagnostics: `--fetch [--refresh-token]`, `--raw`, `--sessions`, `--sizes`, `--reload`.
 
 If the widget gallery does not pick up a new build, `killall chronod NotificationCenter` refreshes it.
 
@@ -125,6 +127,7 @@ Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の
 - **ウィジェットは 5 種類**: Usage（使用量）、Sessions（起動中セッション。処理中 / 入力待ち / 待機のランプ、コンテキストウィンドウ）、Cowork（デスクトップ版の Cowork セッション）、Claude status（稼働状況。障害時は赤いハロー）、Today（今日のトークン量と API 換算コスト）
 - **タップ**: Usage → claude.ai の使用量ページ、Sessions の行 → そのセッションをデスクトップ版で開く、Status → status.claude.com、Today → 即時更新
 - **デザイン**: Glass Orbit / Pace Bars / Console。macOS 26 の着色・クリア表示に対応。更新時はバーや数字がアニメーション
+- **障害時**: Claude status ウィジェットの赤いハローに加え、Usage ウィジェットにもランプの横に状況を表示。文言が長いため、セッション数やトークン量を潰さないよう独立した行に置き、Console では最下段のプロンプトに入力したように見せます
 - **動作要件**: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み
 - **インストール**: `brew tap akito8639/tap && brew trust akito8639/tap && brew install --cask orbit-for-claude-code`、または [Releases ページ](https://github.com/akito8639/orbit-for-claude-code/releases/latest)の zip を展開して「アプリケーション」フォルダへ
 - 「token expired」が出たら、ターミナルで `claude` を一度起動して `/login`（`ANTHROPIC_API_KEY` を設定している場合は `env -u ANTHROPIC_API_KEY claude`）。`claude setup-token` のトークンと API キーは使えません

@@ -285,14 +285,7 @@ struct ClaudeUsageApp: App {
             exit(0)
         }
         if let i = args.firstIndex(of: "--render-extras"), i + 1 < args.count {
-            var snap = args.contains("--live") ? (SnapshotStore.load() ?? .placeholder) : .placeholder
-            if args.contains("--incident") {   // preview the incident styling
-                snap.serviceStatus = ServiceStatus(indicator: "major", description: "Partial outage", claudeCodeStatus: "degraded_performance",
-                    unresolvedIncidents: ["Elevated error rates for Claude Code"], updatedAt: .now,
-                    components: ["claude.ai", "Claude Console (platform.claude.com)", "Claude API (api.anthropic.com)", "Claude Code", "Claude Cowork", "Claude for Government"]
-                        .map { ServiceStatus.StatusComponent(name: $0, status: $0 == "Claude Code" ? "degraded_performance" : "operational") })
-            }
-            Gallery.renderExtras(to: URL(fileURLWithPath: args[i + 1]), snapshot: snap)
+            Gallery.renderExtras(to: URL(fileURLWithPath: args[i + 1]), snapshot: Self.renderSnapshot(args))
             exit(0)
         }
         if let i = args.firstIndex(of: "--render-icon"), i + 1 < args.count {
@@ -322,11 +315,21 @@ struct ClaudeUsageApp: App {
             exit(0)
         }
         if let i = args.firstIndex(of: "--render"), i + 1 < args.count {
-            let live = args.contains("--live")
-            let snap = live ? (SnapshotStore.load() ?? .placeholder) : .placeholder
-            Gallery.render(to: URL(fileURLWithPath: args[i + 1]), snapshot: snap)
+            Gallery.render(to: URL(fileURLWithPath: args[i + 1]), snapshot: Self.renderSnapshot(args))
             exit(0)
         }
+    }
+
+    /// Snapshot for the `--render*` flags: `--live` uses the last fetched one, `--incident` previews the incident styling.
+    private static func renderSnapshot(_ args: [String]) -> UsageSnapshot {
+        var snap = args.contains("--live") ? (SnapshotStore.load() ?? .placeholder) : .placeholder
+        if args.contains("--incident") {
+            snap.serviceStatus = ServiceStatus(indicator: "major", description: "Partial outage", claudeCodeStatus: "degraded_performance",
+                unresolvedIncidents: ["Elevated error rates for Claude Code"], updatedAt: .now,
+                components: ["claude.ai", "Claude Console (platform.claude.com)", "Claude API (api.anthropic.com)", "Claude Code", "Claude Cowork", "Claude for Government"]
+                    .map { ServiceStatus.StatusComponent(name: $0, status: $0 == "Claude Code" ? "degraded_performance" : "operational") })
+        }
+        return snap
     }
 
     var body: some Scene {

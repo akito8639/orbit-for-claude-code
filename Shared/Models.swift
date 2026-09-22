@@ -179,6 +179,12 @@ struct ServiceStatus: Codable, Hashable {
     }
 
     var isHealthy: Bool { indicator == "none" && (claudeCodeStatus ?? "operational") == "operational" }
+
+    /// One line for the widgets: the Claude Code component when it is the one in trouble, else the overall description.
+    var headline: String {
+        if let cc = claudeCodeStatus, cc != "operational" { return "Claude Code " + cc.replacingOccurrences(of: "_", with: " ") }
+        return isHealthy ? L("operational") : description
+    }
 }
 
 /// Context window of a session, taken from the last assistant record in its transcript.
