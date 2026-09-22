@@ -25,6 +25,7 @@ final class UsageStore: ObservableObject {
     private var widgetFingerprints: [String: Int] = [:]
     private var widgetReloadedAt: [String: Date] = [:]
     private var widgetReloadPending: Set<String> = []
+    private var settingsPublish: Task<Void, Never>?   // debounces a run of settings changes into one forced reload
     private static let widgetMinReloadInterval: TimeInterval = 30
     private static let widgetMaxAge: TimeInterval = 45 * 60   // re-render anyway so "Nm ago" cannot drift for hours
 
@@ -75,7 +76,15 @@ final class UsageStore: ObservableObject {
             reschedule()
             Self.syncLoginItem(options[.launchAtLogin])
             Notifier.shared.prepare()
-            publishWidgets()
+            // The user is watching the widgets while they flip a switch or pick a design: reload straight away
+            // instead of waiting out the coalescing window the background polls need. A short settle keeps a run
+            // of switches down to one reload.
+            settingsPublish?.cancel()
+            settingsPublish = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(700))
+                guard !Task.isCancelled else { return }
+                self?.publishWidgets(force: true)
+            }
         }
     }
 
