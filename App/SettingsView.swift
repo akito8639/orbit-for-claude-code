@@ -173,7 +173,7 @@ extension SettingsView {
             Section(L("Add the widget")) {
                 Text(L("Right-click the desktop → “Edit Widgets” → add “Orbit for Claude Code”. It also works in Notification Center."))
                     .font(.caption).foregroundStyle(.secondary)
-                Button(L("Reload widgets")) { WidgetCenter.shared.reloadAllTimelines() }
+                Button(L("Reload widgets")) { AppDelegate.restartWidgets() }
             }
         }
         .formStyle(.grouped)

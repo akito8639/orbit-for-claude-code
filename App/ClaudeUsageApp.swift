@@ -195,7 +195,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         _ = Self.updater
+        Self.restartWidgetsAfterUpdate()
         UsageStore.shared.start()
+    }
+
+    /// A widget extension keeps running the code it was launched with. After an in-place update (Sparkle or
+    /// `brew upgrade`) the desktop therefore keeps drawing the previous version's widgets — for days, until
+    /// something restarts the extension. Do it once, on the first launch of a version we have not run before;
+    /// chronod respawns the extension from the new bundle when it next needs a widget.
+    static func restartWidgetsAfterUpdate() {
+        let key = "last_launched_version"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        let previous = AppSettings.defaults.string(forKey: key)
+        AppSettings.defaults.set(version, forKey: key)
+        guard let previous, previous != version else { return }   // first ever launch: nothing stale to replace
+        restartWidgets()
+    }
+
+    /// Ends the widget extension so the next render comes from the installed bundle, then asks for new timelines.
+    static func restartWidgets() {
+        _ = try? Shell.run("/usr/bin/killall", [AppConstants.widgetExecutable])
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// URLs handed over by widget taps (`widgetURL` / `Link`).

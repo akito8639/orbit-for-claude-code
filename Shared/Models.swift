@@ -14,6 +14,7 @@ enum AppConstants {
         return "com.akito.OrbitForClaudeCode"   // unsigned fallback (previews, tests)
     }()
     static let widgetKind = "OrbitWidget"
+    static let widgetExecutable = "OrbitWidget"   // OrbitWidget.appex/Contents/MacOS/OrbitWidget — the process to end after an update
     static let snapshotFileName = "snapshot.json"
 }
 
