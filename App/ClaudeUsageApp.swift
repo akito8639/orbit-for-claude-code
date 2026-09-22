@@ -208,7 +208,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
         let previous = AppSettings.defaults.string(forKey: key)
         AppSettings.defaults.set(version, forKey: key)
-        guard let previous, previous != version else { return }   // first ever launch: nothing stale to replace
+        guard previous != version else { return }   // no record either: an older version, or a fresh install where the kill is a no-op
         restartWidgets()
     }
 
