@@ -179,6 +179,14 @@ struct DisplayOptions: Hashable {
 
     subscript(_ key: SettingKey) -> Bool { flags[key] ?? key.defaultValue }
 
+    /// The design as it is set right now. A widget re-rendered from an archived entry (a resize, for one) carries
+    /// the design that was chosen when the entry was made, which is jarring next to the widgets that did reload.
+    func withCurrentStyle() -> DisplayOptions {
+        var o = self
+        o.style = AppSettings.style
+        return o
+    }
+
     static let all = DisplayOptions(flags: Dictionary(uniqueKeysWithValues: SettingKey.allCases.map { ($0, $0.defaultValue) }), style: .glassOrbit, refreshMinutes: 5)
 
     func isWindowVisible(_ w: UsageWindow) -> Bool {

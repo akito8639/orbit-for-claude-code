@@ -78,11 +78,13 @@ struct ClaudeUsageWidgetEntryView: View {
     }
 
     var body: some View {
-        UsageDashboardView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date, inWidget: true, refreshable: true)
+        let options = entry.options.withCurrentStyle()
+        UsageDashboardView(snapshot: entry.snapshot, options: options, size: size, now: entry.date, inWidget: true, refreshable: true)
+            .modifier(DrawPlaceholder())
             .containerBackground(for: .widget) {
                 // In accented/clear (Liquid Glass) rendering the system paints its own glass; keep it transparent.
                 if renderingMode == .fullColor {
-                    DashboardBackground(style: entry.options.style, level: level)
+                    DashboardBackground(style: options.style, level: level)
                 } else {
                     Color.clear
                 }
@@ -108,10 +110,11 @@ struct SecondaryWidgetEntryView<Content: View>: View {
 
     var body: some View {
         content(size)
+            .modifier(DrawPlaceholder())
             .containerBackground(for: .widget) {
                 ZStack {
                     if renderingMode == .fullColor {
-                        DashboardBackground(style: entry.options.style, level: alert ? .wellAboveTarget : .onTrack)
+                        DashboardBackground(style: entry.options.withCurrentStyle().style, level: alert ? .wellAboveTarget : .onTrack)
                     } else {
                         Color.clear
                     }
@@ -142,7 +145,7 @@ struct OrbitSessionsWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "OrbitSessionsWidget", provider: UsageProvider()) { entry in
             SecondaryWidgetEntryView(entry: entry) { size in
-                SessionsWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
+                SessionsWidgetView(snapshot: entry.snapshot, options: entry.options.withCurrentStyle(), size: size, now: entry.date)
             }
             .widgetURL(URL(string: "orbit://sessions")!)   // small widget / empty area → bring the Claude app forward
         }
@@ -156,7 +159,7 @@ struct OrbitCoworkWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "OrbitCoworkWidget", provider: UsageProvider()) { entry in
             SecondaryWidgetEntryView(entry: entry) { size in
-                CoworkWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
+                CoworkWidgetView(snapshot: entry.snapshot, options: entry.options.withCurrentStyle(), size: size, now: entry.date)
             }
             .widgetURL(URL(string: "orbit://cowork")!)   // tap → bring the Claude app forward
         }
@@ -170,7 +173,7 @@ struct OrbitStatusWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "OrbitStatusWidget", provider: UsageProvider()) { entry in
             SecondaryWidgetEntryView(entry: entry, alert: entry.snapshot.serviceStatus.map { !$0.isHealthy } ?? false) { size in
-                StatusWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
+                StatusWidgetView(snapshot: entry.snapshot, options: entry.options.withCurrentStyle(), size: size, now: entry.date)
             }
             .widgetURL(URL(string: "https://status.claude.com")!)   // tap → the app opens it in the browser
         }
@@ -184,7 +187,7 @@ struct OrbitTodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "OrbitTodayWidget", provider: UsageProvider()) { entry in
             SecondaryWidgetEntryView(entry: entry) { size in
-                TodayWidgetView(snapshot: entry.snapshot, options: entry.options, size: size, now: entry.date)
+                TodayWidgetView(snapshot: entry.snapshot, options: entry.options.withCurrentStyle(), size: size, now: entry.date)
             }
             .widgetURL(URL(string: "orbit://refresh")!)   // tap → fetch now
         }

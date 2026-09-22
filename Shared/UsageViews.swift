@@ -58,6 +58,17 @@ struct UsageDashboardView: View {
     }
 }
 
+/// WidgetKit greys everything out while it waits for a new timeline — during a resize it re-renders an
+/// archived entry this way, which reads as "the widget did not draw". Our placeholder is sample data, so
+/// draw it properly; a privacy redaction (anything other than the placeholder) is left alone.
+struct DrawPlaceholder: ViewModifier {
+    @Environment(\.redactionReasons) private var reasons
+
+    func body(content: Content) -> some View {
+        if reasons == .placeholder { content.unredacted() } else { content }
+    }
+}
+
 /// Background for each style; used by the widget's containerBackground and the app window.
 struct DashboardBackground: View {
     var style: WidgetStyle
