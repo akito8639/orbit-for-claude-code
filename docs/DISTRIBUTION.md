@@ -25,8 +25,16 @@
 git tag v1.0.1 && git push origin v1.0.1
 ```
 
-3. Release の `sha256.txt` の値で、`akito8639/homebrew-tap` の `Casks/orbit-for-claude-code.rb` の `version` と `sha256` を更新して push（このリポジトリの `homebrew/` は同じ内容のミラー）
-4. 動作確認: `brew update && brew upgrade --cask orbit-for-claude-code`
+3. **毎回必ず** Homebrew を更新する。Release の `sha256.txt` の値で `version` と `sha256` を書き換え、次の 2 か所を両方 push する（ミラーだけ更新して tap を忘れると、brew の利用者に新版が届かない）
+   - tap: `akito8639/homebrew-tap` の `Casks/orbit-for-claude-code.rb`（brew が実際に読むのはこちら）
+   - ミラー: このリポジトリの `homebrew/orbit-for-claude-code.rb`（コミット名 `Cask: x.y.z`）
+
+```bash
+gh release download v1.0.1 -p sha256.txt -O - # → sha256
+git clone https://github.com/akito8639/homebrew-tap.git  # Casks/orbit-for-claude-code.rb を編集してコミット・push
+```
+
+4. 動作確認: `brew update && brew info --cask orbit-for-claude-code` で新しい版になっていること（`brew upgrade --cask orbit-for-claude-code` で更新）
 
 必要な GitHub Secrets: `DEVELOPER_ID_P12`（.p12 の base64）、`DEVELOPER_ID_P12_PASSWORD`、`DEVELOPMENT_TEAM`、`NOTARY_APPLE_ID`（Developer Program に登録した Apple ID）、`NOTARY_PASSWORD`（App 用パスワード）、`SPARKLE_PRIVATE_KEY`（`generate_keys -x` で書き出した EdDSA 秘密鍵。対応する公開鍵は `App/Info.plist` の `SUPublicEDKey`）。
 
