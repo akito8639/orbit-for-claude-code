@@ -125,6 +125,14 @@ struct AppSettings {
     static let refreshMinutesKey = "refresh_minutes"
     static let notifyThresholdKey = "notify_threshold"
     static let sessionSortKey = "session_sort"
+    static let menuBarWindowKey = "menubar_window"
+
+    /// Window whose percentage the menu bar shows: a `UsageWindow.id`, or `autoMenuBarWindow` for the most constrained one.
+    static let autoMenuBarWindow = "auto"
+    static var menuBarWindow: String {
+        get { defaults.string(forKey: menuBarWindowKey) ?? autoMenuBarWindow }
+        set { defaults.set(newValue, forKey: menuBarWindowKey) }
+    }
 
     static var sessionSort: SessionSort {
         get { SessionSort(rawValue: defaults.string(forKey: sessionSortKey) ?? "") ?? .started }
@@ -159,7 +167,7 @@ struct AppSettings {
     static func snapshot() -> DisplayOptions {
         var flags: [SettingKey: Bool] = [:]
         for k in SettingKey.allCases { flags[k] = bool(k) }
-        return DisplayOptions(flags: flags, style: style, refreshMinutes: refreshMinutes, sessionSort: sessionSort)
+        return DisplayOptions(flags: flags, style: style, refreshMinutes: refreshMinutes, sessionSort: sessionSort, menuBarWindow: menuBarWindow)
     }
 }
 
@@ -168,6 +176,7 @@ struct DisplayOptions: Hashable {
     var style: WidgetStyle
     var refreshMinutes: Int
     var sessionSort: SessionSort = .started
+    var menuBarWindow: String = AppSettings.autoMenuBarWindow
 
     func sortedSessions(_ s: [LocalSession]) -> [LocalSession] {
         switch sessionSort {
@@ -201,6 +210,12 @@ struct DisplayOptions: Hashable {
 
     func visibleWindows(_ s: UsageSnapshot) -> [UsageWindow] {
         s.windows.filter(isWindowVisible)
+    }
+
+    /// The window the menu bar shows: the one picked in settings, else (auto, or it is gone) the most constrained visible one.
+    func menuBarWindow(_ s: UsageSnapshot) -> UsageWindow? {
+        if menuBarWindow != AppSettings.autoMenuBarWindow, let w = s.windows.first(where: { $0.id == menuBarWindow }) { return w }
+        return s.worstWindow(visible: Set(visibleWindows(s).map(\.id)))
     }
 
 }

@@ -65,6 +65,15 @@ struct UsageWindow: Codable, Identifiable, Hashable {
         return kind == .other ? id.replacingOccurrences(of: "_", with: " ") : kind.shortTitle
     }
 
+    /// Name for pickers: "5-hour window" / "Weekly window" / "Fable weekly cap".
+    var longTitle: String {
+        switch kind {
+        case .fiveHour: return L("5-hour window")
+        case .sevenDay: return L("Weekly window")
+        default: return scopeName.map { L("%@ weekly cap", $0) } ?? title
+        }
+    }
+
     /// "of the week" / "of the 5h" / "of the Fable week" — for the headline (localized).
     func unitLabel() -> String {
         switch kind {

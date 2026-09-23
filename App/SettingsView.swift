@@ -41,6 +41,12 @@ struct SettingsView: View {
                     }
                 }
             }
+            Section(L("Menu bar")) {
+                Picker(L("Percentage shown"), selection: Binding(get: { AppSettings.menuBarWindow }, set: { AppSettings.menuBarWindow = $0; store.settingsChanged() })) {
+                    Text(L("Most constrained (automatic)")).tag(AppSettings.autoMenuBarWindow)
+                    ForEach(menuBarChoices, id: \.id) { Text($0.name).tag($0.id) }
+                }
+            }
             Section(L("Sessions") + " · " + L("Sort order")) {
                 Picker(L("Sort order"), selection: Binding(get: { AppSettings.sessionSort }, set: { AppSettings.sessionSort = $0; store.settingsChanged() })) {
                     ForEach(SessionSort.allCases) { Text($0.title).tag($0) }
@@ -59,6 +65,16 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Every window the API returns, plus the saved pick if it is missing from the current snapshot (so the picker keeps a tag for it).
+    private var menuBarChoices: [(id: String, name: String)] {
+        var choices = store.snapshot.windows.map { (id: $0.id, name: $0.longTitle) }
+        let saved = AppSettings.menuBarWindow
+        if saved != AppSettings.autoMenuBarWindow, !choices.contains(where: { $0.id == saved }) {
+            choices.append((id: saved, name: saved.replacingOccurrences(of: "weekly_scoped:", with: "")))
+        }
+        return choices
     }
 
     var styleTab: some View { StylePreviewList().environmentObject(store) }
