@@ -317,6 +317,10 @@ struct ClaudeUsageApp: App {
             Gallery.renderExtras(to: URL(fileURLWithPath: args[i + 1]), snapshot: Self.renderSnapshot(args))
             exit(0)
         }
+        if let i = args.firstIndex(of: "--render-incident"), i + 1 < args.count {
+            Gallery.renderIncident(to: URL(fileURLWithPath: args[i + 1]), snapshot: Self.renderSnapshot(args + ["--incident"]))
+            exit(0)
+        }
         if let i = args.firstIndex(of: "--render-icon"), i + 1 < args.count {
             Gallery.renderIcon(to: URL(fileURLWithPath: args[i + 1]))
             exit(0)

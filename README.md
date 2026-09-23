@@ -50,7 +50,7 @@ When status.claude.com reports a problem, the status widget gets a warning halo,
 
 The usage widgets say it too, next to their status lamp. The wording is long ("Claude Code degraded performance"), so it takes a line of its own above the session and token counts instead of squeezing them; Console types it at the prompt on the bottom line, as if it had just been entered.
 
-<img src="docs/status-incident.png" width="600" alt="Status widget during an incident">
+![Claude status and Usage widgets during an incident, Usage in all three designs](docs/incident-widgets.jpg)
 
 ## Requirements
 
@@ -110,7 +110,7 @@ homebrew/ Cask template for your tap
 docs/     design proposal, renders, distribution notes
 ```
 
-Render flags for previews: `--render out.png [--live] [--incident]`, `--render-extras out.png [--live] [--incident]`, `--render-panel out.png`, `--render-settings out.png`, `--render-icon out.png`, `--render-icon-bundle App/AppIcon.icon`, plus `--style glassOrbit|paceBars|console`. Diagnostics: `--fetch [--refresh-token]`, `--raw`, `--sessions`, `--sizes`, `--reload`.
+Render flags for previews: `--render out.png [--live] [--incident]`, `--render-extras out.png [--live] [--incident]`, `--render-incident out.png [--live]`, `--render-panel out.png`, `--render-settings out.png`, `--render-icon out.png`, `--render-icon-bundle App/AppIcon.icon`, plus `--style glassOrbit|paceBars|console`. Diagnostics: `--fetch [--refresh-token]`, `--raw`, `--sessions`, `--sizes`, `--reload`.
 
 If the widget gallery does not pick up a new build, `killall chronod NotificationCenter` refreshes it.
 
