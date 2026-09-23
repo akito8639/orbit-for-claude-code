@@ -392,6 +392,28 @@ struct MenuBarLabel: View {
     }
 }
 
+/// Which window's percentage the menu bar shows — used in both the menu and the settings window.
+struct MenuBarWindowPicker: View {
+    @EnvironmentObject private var store: UsageStore
+
+    /// Every window the API returns, plus the saved pick if it is missing from the current snapshot (so the picker keeps a tag for it).
+    private var choices: [(id: String, name: String)] {
+        var choices = store.snapshot.windows.map { (id: $0.id, name: $0.longTitle) }
+        let saved = store.options.menuBarWindow
+        if saved != AppSettings.autoMenuBarWindow, !choices.contains(where: { $0.id == saved }) {
+            choices.append((id: saved, name: saved.replacingOccurrences(of: "weekly_scoped:", with: "")))
+        }
+        return choices
+    }
+
+    var body: some View {
+        Picker(L("Percentage shown"), selection: Binding(get: { store.options.menuBarWindow }, set: { AppSettings.menuBarWindow = $0; store.settingsChanged() })) {
+            Text(L("Most constrained (automatic)")).tag(AppSettings.autoMenuBarWindow)
+            ForEach(choices, id: \.id) { Text($0.name).tag($0.id) }
+        }
+    }
+}
+
 /// Minimal menu: design switch, refresh, settings, quit. Everything else lives in the widgets.
 struct MenuBarMenu: View {
     @EnvironmentObject private var store: UsageStore
@@ -400,6 +422,7 @@ struct MenuBarMenu: View {
         Picker(L("Design"), selection: Binding(get: { store.options.style }, set: { AppSettings.style = $0; store.settingsChanged() })) {
             ForEach(WidgetStyle.allCases) { s in Text(s.title).tag(s) }
         }
+        MenuBarWindowPicker()
         Menu(L("Notifications")) {
             Toggle(L("Limit threshold (%d%%)", AppSettings.notifyThreshold), isOn: toggle(.notifyLimits))
             Toggle(L("Session waiting for you"), isOn: toggle(.notifyWaiting))
