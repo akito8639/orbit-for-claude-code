@@ -74,7 +74,7 @@ struct ClaudeUsageWidgetEntryView: View {
     }
 
     private var level: UsageLevel {
-        entry.snapshot.worstWindow(at: entry.date, visible: Set(entry.options.visibleWindows(entry.snapshot).map(\.id)))?.level(at: entry.date) ?? .onTrack
+        entry.options.headlineLevel(entry.snapshot, at: entry.date)   // Glass Orbit's glow follows the headline (the forecast)
     }
 
     var body: some View {

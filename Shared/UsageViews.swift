@@ -202,17 +202,23 @@ struct StatusDot: View {
     }
 }
 
-/// Headline such as "Well above target — 85% of the week".
+/// Headline: the forecast ("weekly limit ~Sat 05:00 at this pace") when there is one,
+/// else the worst window ("Well above target — 85% of the week").
 struct Headline {
-    static func eyebrow(_ w: UsageWindow?, options: DisplayOptions) -> String {
+    static func eyebrow(_ w: UsageWindow?, forecast: UsageForecast?, options: DisplayOptions) -> String {
+        if let forecast { return L("FORECAST — CLAUDE %@", forecast.window.title.uppercased()) }
         guard let w else { return L("NO DATA") }
         return L("WORST — CLAUDE %@", w.title.uppercased())
     }
-    static func text(_ w: UsageWindow?, now: Date, options: DisplayOptions, snapshot: UsageSnapshot) -> String {
+    static func text(_ w: UsageWindow?, forecast: UsageForecast?, now: Date, options: DisplayOptions, snapshot: UsageSnapshot) -> String {
         if let err = snapshot.errorMessage, snapshot.windows.isEmpty { return err }
+        if let forecast { return forecast.headline(now: now) }
         guard let w else { return L("Waiting for data…") }
         let lvl = w.level(at: now)
         return "\(lvl.headline) — \(Fmt.percent(w.utilization)) \(w.unitLabel())"
+    }
+    static func level(_ w: UsageWindow?, forecast: UsageForecast?, now: Date) -> UsageLevel {
+        forecast?.level ?? w?.level(at: now) ?? .onTrack
     }
 }
 
@@ -457,6 +463,7 @@ struct GlassOrbitView: View {
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
+    private var forecast: UsageForecast? { options.forecast(snapshot, at: now) }
     private var five: UsageWindow? { windows.first { $0.kind == .fiveHour } }
     /// The weekly window that matters most (all-model week vs per-model caps such as Fable).
     private var week: UsageWindow? {
@@ -568,10 +575,11 @@ struct GlassOrbitView: View {
                     Spacer(minLength: 2)
                     RefreshStamp(text: Fmt.relative(snapshot.fetchedAt, now: now), font: .system(size: 9, design: .rounded), color: .white.opacity(0.5), refresh: refreshable)
                 }
-                Text(Headline.text(worst, now: now, options: options, snapshot: snapshot))
+                let headline = Headline.text(worst, forecast: forecast, now: now, options: options, snapshot: snapshot)
+                Text(headline)
                     .font(.system(size: 12.5, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Palette.level(worst?.level(at: now) ?? .onTrack))
-                    .lineLimit(1).minimumScaleFactor(0.65).animatedNumber(worst?.utilization ?? 0)
+                    .foregroundStyle(Palette.level(Headline.level(worst, forecast: forecast, now: now)))
+                    .lineLimit(1).minimumScaleFactor(0.65).animatedNumber(headline)
                 ForEach(windows.prefix(4)) { w in
                     row(w)
                 }
@@ -629,6 +637,7 @@ struct PaceBarsView: View {
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
     private var worstLevel: UsageLevel { worst?.level(at: now) ?? .onTrack }
+    private var forecast: UsageForecast? { options.forecast(snapshot, at: now) }
 
     var body: some View {
         switch size {
@@ -639,15 +648,17 @@ struct PaceBarsView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 10) {
-            RingView(progress: (worst?.utilization ?? 0) / 100, pace: worst?.paceFraction(at: now), color: Palette.level(worstLevel), lineWidth: 5, showPace: options[.showPaceMarker])
+        let ring = forecast?.window ?? worst   // the ring shows the window the headline is about
+        let headline = Headline.text(worst, forecast: forecast, now: now, options: options, snapshot: snapshot)
+        return HStack(alignment: .top, spacing: 10) {
+            RingView(progress: (ring?.utilization ?? 0) / 100, pace: ring?.paceFraction(at: now), color: Palette.level(ring?.level(at: now) ?? .onTrack), lineWidth: 5, showPace: options[.showPaceMarker])
                 .frame(width: 30, height: 30)
             VStack(alignment: .leading, spacing: 1) {
-                Text(Headline.eyebrow(worst, options: options)).font(.system(size: 9, weight: .semibold, design: .rounded)).tracking(1.2).foregroundStyle(.white.opacity(0.55))
-                Text(Headline.text(worst, now: now, options: options, snapshot: snapshot))
+                Text(Headline.eyebrow(worst, forecast: forecast, options: options)).font(.system(size: 9, weight: .semibold, design: .rounded)).tracking(1.2).foregroundStyle(.white.opacity(0.55))
+                Text(headline)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(Palette.level(worstLevel))
-                    .lineLimit(1).minimumScaleFactor(0.7).animatedNumber(worst?.utilization ?? 0)
+                    .foregroundStyle(Palette.level(Headline.level(worst, forecast: forecast, now: now)))
+                    .lineLimit(1).minimumScaleFactor(0.7).animatedNumber(headline)
             }
             Spacer(minLength: 4)
             VStack(alignment: .trailing, spacing: 1) {
@@ -755,6 +766,7 @@ struct ConsoleView: View {
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
     private var worstLevel: UsageLevel { worst?.level(at: now) ?? .onTrack }
+    private var forecast: UsageForecast? { options.forecast(snapshot, at: now) }
     private let ink = Color(red: 0.86, green: 0.87, blue: 0.84)
     private let dim = Color(red: 0.86, green: 0.87, blue: 0.84).opacity(0.5)
 
@@ -791,10 +803,13 @@ struct ConsoleView: View {
         }
     }
 
-    private var summary: some View {
-        HStack(spacing: 4) {
-            Text("→").font(mono(11)).foregroundStyle(dim)
-            Text(Headline.text(worst, now: now, options: options, snapshot: snapshot)).font(mono(11, .semibold)).foregroundStyle(Palette.level(worstLevel)).lineLimit(1).minimumScaleFactor(0.75).animatedNumber(worst?.utilization ?? 0)
+    /// `→ Well above target — 85% of the week` — only without a forecast; the forecast is typed at the prompt instead.
+    @ViewBuilder private var summary: some View {
+        if forecast == nil {
+            HStack(spacing: 4) {
+                Text("→").font(mono(11)).foregroundStyle(dim)
+                Text(Headline.text(worst, forecast: nil, now: now, options: options, snapshot: snapshot)).font(mono(11, .semibold)).foregroundStyle(Palette.level(worstLevel)).lineLimit(1).minimumScaleFactor(0.75).animatedNumber(worst?.utilization ?? 0)
+            }
         }
     }
 
@@ -804,19 +819,25 @@ struct ConsoleView: View {
         return s.headline
     }
 
-    /// Idle prompt — or, during an incident, the status typed at the prompt as if it had just been entered.
-    /// `typing` is off in large, where the status section below spells the same thing out.
-    private func cursor(typing: Bool = true) -> some View {
+    /// The prompt with the forecast typed at it as if it had just been entered — or, during an incident, the status
+    /// instead (the incident wins). `typingIncident` is off in large, where the status section below spells it out.
+    private func cursor(typingIncident: Bool = true) -> some View {
         HStack(spacing: 6) {
             Text("❯").font(mono(12, .bold)).foregroundStyle(Palette.claude)
-            if typing, let incident {
-                Text(incident).font(mono(11)).foregroundStyle(Palette.status(snapshot.serviceStatus))
-                    .lineLimit(1).minimumScaleFactor(0.7)
+            if typingIncident, let incident {
+                TypedLine(text: incident, font: mono(11), color: Palette.status(snapshot.serviceStatus), live: !inWidget) { caret }
+            } else if incident == nil, let forecast {
+                TypedLine(text: forecast.headline(now: now), font: mono(11, .semibold), color: Palette.level(forecast.level), live: !inWidget) { caret }
+            } else {
+                caret
             }
-            RoundedRectangle(cornerRadius: 1).fill(ink.opacity(0.8)).frame(width: 7, height: 13)
             Spacer(minLength: 4)
             RefreshStamp(text: Fmt.relative(snapshot.fetchedAt, now: now), font: mono(9.5), color: dim, refresh: refreshable)
         }
+    }
+
+    private var caret: some View {
+        RoundedRectangle(cornerRadius: 1).fill(ink.opacity(0.8)).frame(width: 7, height: 13)
     }
 
     private var small: some View {
@@ -868,7 +889,76 @@ struct ConsoleView: View {
             Rectangle().fill(dim.opacity(0.3)).frame(height: 1).padding(.vertical, 2)
             ExtrasDetail(snapshot: snapshot, options: options, mono: true, now: now)
             Spacer(minLength: 0)
-            cursor(typing: false)
+            cursor(typingIncident: false)
+        }
+    }
+}
+
+/// Console prompt text that looks typed in whenever it changes. The widget only animates between timeline entries and
+/// cannot run code mid-animation, so there the new line is wiped in left to right with the caret riding its edge;
+/// the app window types it a character at a time. Reduce Motion shows it at once.
+struct TypedLine<Caret: View>: View {
+    var text: String
+    var font: Font
+    var color: Color
+    var live: Bool
+    @ViewBuilder var caret: Caret
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var typed: Int?          // live: characters typed so far (nil = the whole line)
+    @State private var lastText: String?    // live: the line already on screen, so opening the panel does not retype it
+
+    var body: some View {
+        if live { liveBody } else { widgetBody }
+    }
+
+    private func label(_ s: String) -> some View {
+        Text(s).font(font).foregroundStyle(color).lineLimit(1).minimumScaleFactor(0.7)
+    }
+
+    private var widgetBody: some View {
+        ZStack(alignment: .leading) {
+            label(text)
+                .id(text)
+                .transition(.asymmetric(
+                    insertion: .modifier(active: Reveal(fraction: 0, caret: caret), identity: Reveal(fraction: 1, caret: caret)),
+                    removal: AnyTransition.opacity.animation(.easeOut(duration: 0.1))))
+        }
+        .animation(reduceMotion ? nil : .linear(duration: 1.2), value: text)
+    }
+
+    private var liveBody: some View {
+        HStack(spacing: 6) {
+            label(String(text.prefix(typed ?? text.count)))
+            caret
+        }
+        .task(id: text) {
+            let previous = lastText
+            lastText = text
+            guard let previous, previous != text, !reduceMotion else { typed = nil; return }
+            for i in 0...text.count {
+                typed = i
+                try? await Task.sleep(for: .milliseconds(30))
+                if Task.isCancelled { return }   // a newer line took over; leave the state to it
+            }
+            typed = nil
+        }
+    }
+
+    /// Masks the line to `fraction` of its width and puts the caret at that edge; both interpolate natively.
+    private struct Reveal: ViewModifier {
+        var fraction: CGFloat
+        var caret: Caret
+
+        func body(content: Content) -> some View {
+            content
+                .mask(alignment: .leading) { Rectangle().scaleEffect(x: fraction, anchor: .leading) }
+                .overlay(alignment: .leading) {
+                    GeometryReader { g in
+                        caret.frame(maxHeight: .infinity).offset(x: g.size.width * fraction + 6)
+                    }
+                }
+                .padding(.trailing, 13)   // room for the caret (6 pt gap + 7 pt wide), which sits outside the text's frame
         }
     }
 }

@@ -34,6 +34,7 @@ enum SettingKey: String, CaseIterable {
     case showBreakdown = "show_breakdown"
     case showOtherWindows = "show_other_windows"
     case showPaceMarker = "show_pace_marker"
+    case showForecast = "show_forecast"
     case showProfile = "show_profile"
     case showServiceStatus = "show_service_status"
     case showAllComponents = "show_all_components"
@@ -65,6 +66,7 @@ enum SettingKey: String, CaseIterable {
         case .showExtraUsage: return L("Extra usage credits")
         case .showOtherWindows: return L("Show other windows the API returns")
         case .showPaceMarker: return L("Pace target marker")
+        case .showForecast: return L("Forecast headline (when a limit runs out at this pace)")
         case .showProfile: return L("Account (e-mail / plan)")
         case .showServiceStatus: return L("Claude service status (status.claude.com)")
         case .showAllComponents: return L("Per-component status (claude.ai / API / Console / Cowork…)")
@@ -84,7 +86,7 @@ enum SettingKey: String, CaseIterable {
 
     var section: String {
         switch self {
-        case .showFiveHour, .showSevenDay, .showModelWindows, .showExtraUsage, .showOtherWindows, .showPaceMarker, .showResetTimes, .showBreakdown:
+        case .showFiveHour, .showSevenDay, .showModelWindows, .showExtraUsage, .showOtherWindows, .showPaceMarker, .showForecast, .showResetTimes, .showBreakdown:
             return L("Usage (OAuth usage API)")
         case .showProfile:
             return L("Account (OAuth profile API)")
@@ -216,6 +218,16 @@ struct DisplayOptions: Hashable {
     func menuBarWindow(_ s: UsageSnapshot) -> UsageWindow? {
         if menuBarWindow != AppSettings.autoMenuBarWindow, let w = s.windows.first(where: { $0.id == menuBarWindow }) { return w }
         return s.worstWindow(visible: Set(visibleWindows(s).map(\.id)))
+    }
+
+    /// The headline's forecast over the visible windows, when the setting is on and there is enough to go on.
+    func forecast(_ s: UsageSnapshot, at now: Date = .now) -> UsageForecast? {
+        self[.showForecast] ? s.forecast(at: now, visible: Set(visibleWindows(s).map(\.id))) : nil
+    }
+
+    /// The state the headline and Glass Orbit's glow show: the forecast's, else the worst visible window's.
+    func headlineLevel(_ s: UsageSnapshot, at now: Date = .now) -> UsageLevel {
+        forecast(s, at: now)?.level ?? s.worstWindow(at: now, visible: Set(visibleWindows(s).map(\.id)))?.level(at: now) ?? .onTrack
     }
 
 }

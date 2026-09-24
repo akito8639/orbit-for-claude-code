@@ -92,6 +92,26 @@ struct UsageWindow: Codable, Identifiable, Hashable {
         return min(max(f, 0), 1)
     }
 
+    /// When the window reaches 100% if the average rate so far continues — the pace marker extended forward.
+    /// Nil before the reset is known, early in the window (under 12% elapsed) or with too little use to tell.
+    func projectedExhaustion(at now: Date = .now) -> Date? {
+        guard let resetsAt, resetsAt > now, let f = paceFraction(at: now), f >= 0.12, utilization >= 3 else { return nil }
+        let start = resetsAt.addingTimeInterval(-kind.duration)
+        return start.addingTimeInterval(now.timeIntervalSince(start) * 100 / utilization)
+    }
+
+    /// A projected run-out this close to the reset is noise, not a warning.
+    var forecastMargin: TimeInterval { kind == .fiveHour ? 20 * 60 : 3 * 3600 }
+
+    /// "5h limit" / "weekly limit" / "Fable weekly limit" — for the forecast headline (localized).
+    var limitName: String {
+        switch kind {
+        case .fiveHour: return L("5h limit")
+        case .sevenDay: return L("weekly limit")
+        default: return scopeName.map { L("%@ weekly limit", $0) } ?? L("%@ limit", title)
+        }
+    }
+
     func level(at now: Date = .now) -> UsageLevel {
         let computed = UsageLevel.classify(utilization: utilization, pace: paceFraction(at: now))
         // Let the API's own severity raise (never lower) the level.
@@ -139,6 +159,33 @@ enum UsageLevel: Int, Codable, Comparable {
         case .aboveTarget: return L("Above target")
         case .wellAboveTarget: return L("Well above target")
         case .exhausted: return L("Limit reached")
+        }
+    }
+}
+
+// MARK: - Forecast
+
+/// The answer the headline gives instead of a number: when the binding limit runs out at this pace,
+/// when it comes back, or that there is room until the reset.
+struct UsageForecast: Equatable {
+    enum Outcome: Equatable {
+        case exhausted   // at the limit now; `date` is when it comes back
+        case runsOut     // reaches the limit before its reset; `date` is when (projected)
+        case lasts       // room to spare; `date` is the reset it lasts until
+    }
+    var outcome: Outcome
+    var window: UsageWindow
+    var date: Date?
+    var level: UsageLevel
+
+    func headline(now: Date = .now) -> String {
+        switch outcome {
+        case .exhausted: return L("%1$@ reached — back %2$@", window.limitName, Fmt.resetLabel(date, now: now))
+        case .runsOut: return L("%1$@ ~%2$@ at this pace", window.limitName, date.map { Fmt.forecastLabel($0, now: now) } ?? "—")
+        case .lasts:
+            // "Room to spare" only when this pace ends the window well short of the limit; a tight finish just says it lasts.
+            let atReset = window.utilization / max(window.paceFraction(at: now) ?? 1, 0.01)
+            return L(atReset < 80 ? "Room to spare — lasts until %@" : "Lasts until %@ at this pace", Fmt.resetLabel(date, now: now))
         }
     }
 }
@@ -367,6 +414,28 @@ struct UsageSnapshot: Codable {
             return la == lb ? a.utilization < b.utilization : la < lb
         }
     }
+
+    /// The headline's answer across the visible windows; nil when there is not enough to go on yet.
+    func forecast(at now: Date = .now, visible: Set<String>? = nil) -> UsageForecast? {
+        let candidates = windows.filter { (visible == nil || visible!.contains($0.id)) && $0.resetsAt != nil }
+        // Blocked: the answer is when the last exhausted limit comes back.
+        if let w = candidates.filter({ $0.utilization >= 100 }).max(by: { $0.resetsAt! < $1.resetsAt! }) {
+            return UsageForecast(outcome: .exhausted, window: w, date: w.resetsAt, level: .exhausted)
+        }
+        // The limit that runs out first, counting only run-outs well ahead of that window's own reset.
+        let runOuts = candidates.compactMap { w -> (UsageWindow, Date)? in
+            guard let t = w.projectedExhaustion(at: now), let r = w.resetsAt, r.timeIntervalSince(t) >= w.forecastMargin else { return nil }
+            return (w, t)
+        }
+        if let (w, t) = runOuts.min(by: { $0.1 < $1.1 }) {
+            return UsageForecast(outcome: .runsOut, window: w, date: t, level: t.timeIntervalSince(now) < 24 * 3600 ? .wellAboveTarget : .aboveTarget)
+        }
+        // Room to spare until the reset of the tightest weekly window; the 5-hour one resets too soon to be the answer.
+        let projected = { (w: UsageWindow) in w.utilization / max(w.paceFraction(at: now) ?? 1, 0.01) }
+        guard let w = candidates.filter({ $0.kind != .fiveHour && $0.projectedExhaustion(at: now) != nil }).max(by: { projected($0) < projected($1) })
+        else { return nil }
+        return UsageForecast(outcome: .lasts, window: w, date: w.resetsAt, level: .onTrack)
+    }
 }
 
 // MARK: - Snapshot store (App Group container)
@@ -412,6 +481,15 @@ enum Fmt {
             df.dateFormat = "MMM d HH:mm"
         }
         return df.string(from: date)
+    }
+
+    /// A projected time, rounded so it claims no more precision than it has: to the hour, or to 10 minutes within the next two hours.
+    static func forecastLabel(_ date: Date, now: Date = .now) -> String {
+        let step: TimeInterval = date.timeIntervalSince(now) < 2 * 3600 ? 600 : 3600
+        let offset = TimeInterval(TimeZone.current.secondsFromGMT(for: date))   // round on the local clock (half-hour zones)
+        var t = ((date.timeIntervalSinceReferenceDate + offset) / step).rounded() * step - offset
+        if t < now.timeIntervalSinceReferenceDate { t += step }
+        return resetLabel(Date(timeIntervalSinceReferenceDate: t), now: now)
     }
 
     static func relative(_ date: Date, now: Date = .now) -> String {

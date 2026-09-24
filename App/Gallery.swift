@@ -23,7 +23,7 @@ enum Gallery {
                     HStack(alignment: .top, spacing: 20) {
                         ForEach(Array(sizes.enumerated()), id: \.offset) { _, item in
                             let (size, dim) = item
-                            let level = snapshot.worstWindow()?.level() ?? .onTrack
+                            let level = opts.headlineLevel(snapshot)
                             UsageDashboardView(snapshot: snapshot, options: opts, size: size, inWidget: true)
                                 .padding(18)
                                 .frame(width: dim.width, height: dim.height)
@@ -61,7 +61,7 @@ extension Gallery {
     @MainActor
     static func renderPanel(to url: URL, snapshot: UsageSnapshot) {
         let opts = AppSettings.snapshot()
-        let level = snapshot.worstWindow()?.level() ?? .onTrack
+        let level = opts.headlineLevel(snapshot)
         let view = VStack(spacing: 10) {
             UsageDashboardView(snapshot: snapshot, options: opts, size: .medium)
                 .padding(18)
