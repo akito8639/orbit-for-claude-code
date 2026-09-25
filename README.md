@@ -134,4 +134,5 @@ Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の
 - 「token expired」が出たら、ターミナルで `claude` を一度起動して `/login`（`ANTHROPIC_API_KEY` を設定している場合は `env -u ANTHROPIC_API_KEY claude`）。`claude setup-token` のトークンと API キーは使えません
 - 表示項目は設定ですべて ON / OFF。ログイン時起動、通知（しきい値超過 / 入力待ち / 障害）、セッションの並び順も設定可能。UI はシステム言語に追従（英語 / 日本語 / 簡体字中国語 / 韓国語）
 - アップデートはアプリ内（Sparkle、1 日 1 回確認）または `brew upgrade`
+- 解説記事: [仕組みと「いつ尽きるか」の予測ロジック（Qiita）](https://qiita.com/akito8639/items/3d8f61c33da566662d0d)、[作ったきっかけ（note）](https://note.com/kitorhythm/n/nf94014a66add)
 - 非公式プロジェクトで、Anthropic とは無関係です
