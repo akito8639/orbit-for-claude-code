@@ -1,10 +1,12 @@
 import SwiftUI
 import WidgetKit
+import AppIntents
 
 struct UsageEntry: TimelineEntry {
     let date: Date
     let snapshot: UsageSnapshot
     let options: DisplayOptions
+    var repo: String? = nil   // Sessions widget: the repository it is filtered to (nil = all)
 }
 
 struct UsageProvider: TimelineProvider {
@@ -57,6 +59,24 @@ struct UsageProvider: TimelineProvider {
     private static func timeline(_ snap: UsageSnapshot, options: DisplayOptions, now: Date, entries: Int) -> Timeline<UsageEntry> {
         let list = (0..<entries).map { i in UsageEntry(date: now.addingTimeInterval(Double(i) * 300), snapshot: snap, options: options) }
         return Timeline(entries: list, policy: .atEnd)
+    }
+}
+
+/// The Sessions widget's provider: the same entries as `UsageProvider`, tagged with the configured repository.
+struct SessionsProvider: AppIntentTimelineProvider {
+    private let base = UsageProvider()
+
+    func placeholder(in context: Context) -> UsageEntry { base.placeholder(in: context) }
+
+    func snapshot(for configuration: SessionsFilterIntent, in context: Context) async -> UsageEntry {
+        let e = await withCheckedContinuation { c in base.getSnapshot(in: context) { c.resume(returning: $0) } }
+        return UsageEntry(date: e.date, snapshot: e.snapshot, options: e.options, repo: configuration.repo)
+    }
+
+    func timeline(for configuration: SessionsFilterIntent, in context: Context) async -> Timeline<UsageEntry> {
+        let t = await withCheckedContinuation { c in base.getTimeline(in: context) { c.resume(returning: $0) } }
+        return Timeline(entries: t.entries.map { UsageEntry(date: $0.date, snapshot: $0.snapshot, options: $0.options, repo: configuration.repo) },
+                        policy: t.policy)
     }
 }
 
@@ -143,9 +163,10 @@ struct OrbitUsageWidget: Widget {
 
 struct OrbitSessionsWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "OrbitSessionsWidget", provider: UsageProvider()) { entry in
+        // Configurable ("Edit Widget" → Repository): one widget per repository, or all of them.
+        AppIntentConfiguration(kind: "OrbitSessionsWidget", intent: SessionsFilterIntent.self, provider: SessionsProvider()) { entry in
             SecondaryWidgetEntryView(entry: entry) { size in
-                SessionsWidgetView(snapshot: entry.snapshot, options: entry.options.withCurrentStyle(), size: size, now: entry.date)
+                SessionsWidgetView(snapshot: entry.snapshot, options: entry.options.withCurrentStyle(), size: size, now: entry.date, repo: entry.repo)
             }
             .widgetURL(URL(string: "orbit://sessions")!)   // small widget / empty area → bring the Claude app forward
         }

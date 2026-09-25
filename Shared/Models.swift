@@ -317,6 +317,15 @@ struct LocalSession: Codable, Hashable, Identifiable {
 
     var projectName: String { (cwd as NSString).lastPathComponent }
 
+    /// Repository the session works in: the folder name, except that a worktree under `<repo>/.claude/worktrees/`
+    /// counts as `<repo>`. The widget extension is sandboxed and cannot ask git, so this goes by the path alone.
+    var repoName: String { Self.repoName(cwd: cwd) }
+
+    static func repoName(cwd: String) -> String {
+        if let r = cwd.range(of: "/.claude/worktrees/") { return (String(cwd[..<r.lowerBound]) as NSString).lastPathComponent }
+        return (cwd as NSString).lastPathComponent
+    }
+
     /// Tap target for this session: opens it in the Claude desktop app when it was started there.
     var deepLink: URL? {
         if let h = hostSessionId, h.hasPrefix("local_") {
@@ -478,6 +487,20 @@ enum SnapshotStore {
         enc.dateEncodingStrategy = .iso8601
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         try enc.encode(snapshot).write(to: url, options: .atomic)
+    }
+}
+
+/// The Sessions widget's filter choices, written by the app: repositories with a running session, then those in
+/// Claude Code's history (~/.claude/projects), most recent first. Stored in the App Group because the sandboxed
+/// widget cannot read ~/.claude.
+enum KnownRepos {
+    private static let key = "known_repos"
+
+    static func load() -> [String] { AppSettings.defaults.stringArray(forKey: key) ?? [] }
+
+    static func save(_ names: [String]) {
+        let list = names.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+        if list != load() { AppSettings.defaults.set(list, forKey: key) }
     }
 }
 

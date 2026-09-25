@@ -20,7 +20,7 @@ Five widgets in one app. Place the ones you need side by side; they share one de
 | Widget | Sizes | Shows | Tap |
 |---|---|---|---|
 | **Usage** | S / M / L | 5-hour and weekly limits, per-model weekly caps (Fable / Opus / Sonnet), pace marker, weekly usage by surface, status, sessions, today | claude.ai usage page |
-| **Sessions** | S / M / L | Running Claude Code sessions with a live activity lamp, title or folder, where it was started, uptime, and each session's context window (used / limit, cached vs fresh) | Opens that session in the Claude desktop app, or the folder in Finder for terminal sessions |
+| **Sessions** | S / M / L | Running Claude Code sessions with a live activity lamp, title or folder, where it was started, uptime, and each session's context window (used / limit, cached vs fresh). Can be filtered to one repository | Opens that session in the Claude desktop app, or the folder in Finder for terminal sessions |
 | **Cowork** | S / M / L | Recent Cowork sessions from the desktop app: title, last activity, model | Claude app |
 | **Claude status** | S / M | status.claude.com: overall state, every component, open incidents. Incidents get a warning halo | status.claude.com |
 | **Today** | S / M | Tokens (in / out / cache), messages, API-equivalent cost, breakdown by model, cache hit rate | Refresh now |
@@ -34,6 +34,7 @@ Five widgets in one app. Place the ones you need side by side; they share one de
 - **Activity lamps** — orange: working · red: waiting for you (permission prompt or input) · green: idle · grey: unknown. Same source as the desktop app's indicator (`~/.claude/sessions`), polled every 20 seconds; widgets reload only when something changed.
 - **Context window** — "566.4k / 1M (57%)" is the last turn's `input + cache_read` over the model's limit (200k or 1M), exactly what the desktop app shows. The bar splits cached prompt (blue), cache writes (green) and fresh input (orange).
 - **Entry icon** before a session name: terminal, desktop app window, `</>` for IDE extensions, box for the Agent SDK, two people for Cowork, cloud for remote.
+- **Repository filter** — right-click a Sessions widget → *Edit "Sessions"* → *Repository*: *All repositories* (default) or one repository, shown after the title ("Sessions my-app"). Each widget keeps its own choice, so one per repository can sit side by side. The list holds repositories with a running session, then those in Claude Code's history, most recent first; sessions in a worktree (`<repo>/.claude/worktrees/…`) count as their repository.
 
 ### Menu bar
 
@@ -86,6 +87,7 @@ Only the OAuth token Claude Code stores at login works. `claude setup-token` tok
 | Service status, components, incidents | `status.claude.com/api/v2/summary.json` |
 | Running sessions, activity, title, entrypoint | `~/.claude/sessions/*.json` (pid liveness checked) |
 | Context window per session | tail of `~/.claude/projects/<cwd>/<session>.jsonl` |
+| Repositories for the Sessions filter | `cwd` in the newest transcript of each `~/.claude/projects/*` folder, then `projects` in `~/.claude.json` |
 | Cowork sessions | `~/Library/Application Support/Claude/local-agent-mode-sessions` |
 | Today's tokens and cost | `~/.claude/projects/**/*.jsonl` modified today, deduplicated by message id |
 
@@ -127,6 +129,7 @@ Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の
 
 - **ウィジェットは 5 種類**: Usage（使用量）、Sessions（起動中セッション。処理中 / 入力待ち / 待機のランプ、コンテキストウィンドウ）、Cowork（デスクトップ版の Cowork セッション）、Claude status（稼働状況。障害時は赤いハロー）、Today（今日のトークン量と API 換算コスト）
 - **タップ**: Usage → claude.ai の使用量ページ、Sessions の行 → そのセッションをデスクトップ版で開く、Status → status.claude.com、Today → 即時更新
+- **リポジトリで絞り込み**: Sessions ウィジェットを右クリック →「"セッション"を編集」→「リポジトリ」で、すべて（既定）か 1 つのリポジトリを選択。選んだ名前はタイトルの後ろに表示。ウィジェットごとに設定できるので、リポジトリごとに並べて置けます。候補は起動中と Claude Code の履歴から新しい順、worktree のセッションは元のリポジトリとして数えます
 - **デザイン**: Glass Orbit / Pace Bars / Console。macOS 26 の着色・クリア表示に対応。更新時はバーや数字がアニメーション
 - **障害時**: Claude status ウィジェットの赤いハローに加え、Usage ウィジェットにもランプの横に状況を表示。文言が長いため、セッション数やトークン量を潰さないよう独立した行に置き、Console では最下段のプロンプトに入力したように見せます
 - **動作要件**: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み

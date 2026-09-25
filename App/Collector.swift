@@ -247,6 +247,56 @@ enum LocalScanner {
             .prefix(limit))
     }
 
+    /// Repositories Claude Code has worked in (worktrees folded into their repository, see `LocalSession.repoName`):
+    /// by the newest transcript under ~/.claude/projects, most recent first, then the rest of ~/.claude.json's project
+    /// list — Claude Code prunes old transcripts, but keeps the project entries. A project folder's name is the cwd with
+    /// every non-alphanumeric replaced by "-", which cannot be turned back into a path, so the cwd comes from the
+    /// transcript itself — read once per folder.
+    static func recentRepos(limit: Int = 40) -> [String] {
+        let fm = FileManager.default
+        let projects = claudeDir.appendingPathComponent("projects")
+        let dirs = (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
+        // A folder's own date does not move when a transcript in it is appended to; its newest transcript's does.
+        let dated = dirs.compactMap { d -> (dir: URL, transcript: URL, at: Date)? in
+            guard let files = try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey]) else { return nil }
+            return files.filter { $0.pathExtension == "jsonl" }.map { ($0, modified($0)) }.max { $0.1 < $1.1 }.map { (d, $0.0, $0.1) }
+        }.sorted { $0.at > $1.at }
+        var cwds = dated.compactMap { projectCwd($0.dir, transcript: $0.transcript) }
+        if let data = try? Data(contentsOf: fm.homeDirectoryForCurrentUser.appendingPathComponent(".claude.json")),
+           let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let p = j["projects"] as? [String: Any] {
+            cwds += p.keys.sorted()
+        }
+        let home = fm.homeDirectoryForCurrentUser.path
+        var out: [String] = []
+        for cwd in cwds where cwd != home && !cwd.contains("/Library/Application Support/") {   // skip ~ and desktop scratch folders
+            let name = LocalSession.repoName(cwd: cwd)
+            if !out.contains(name) { out.append(name) }
+            if out.count >= limit { break }
+        }
+        return out
+    }
+
+    private static func modified(_ u: URL) -> Date {
+        (try? u.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+    }
+
+    nonisolated(unsafe) private static var cwdCache: [String: String] = [:]
+    private static let cwdLock = NSLock()
+
+    private static func projectCwd(_ dir: URL, transcript: URL) -> String? {
+        cwdLock.lock(); defer { cwdLock.unlock() }
+        if let c = cwdCache[dir.lastPathComponent] { return c }
+        guard let h = try? FileHandle(forReadingFrom: transcript) else { return nil }
+        defer { try? h.close() }
+        // "cwd" is on nearly every line; the first 256 KB is plenty (early lines can carry large tool output).
+        guard let data = try? h.read(upToCount: 256 * 1024), case let text = String(decoding: data, as: UTF8.self),
+              let r = text.range(of: #""cwd":"((?:[^"\\]|\\.)*)""#, options: .regularExpression),
+              let obj = try? JSONSerialization.jsonObject(with: Data("{\(text[r])}".utf8)) as? [String: String],
+              let cwd = obj["cwd"] else { return nil }
+        cwdCache[dir.lastPathComponent] = cwd
+        return cwd
+    }
+
     /// Claude Code stores transcripts at ~/.claude/projects/<cwd with non-alphanumerics replaced by "-">/<sessionId>.jsonl
     static func transcriptURL(sessionId: String, cwd: String) -> URL? {
         let projects = claudeDir.appendingPathComponent("projects")
@@ -369,6 +419,7 @@ enum Collector {
         let todayTask = Task.detached(priority: .utility) { options[.showTodayUsage] ? LocalScanner.todayUsage() : nil }
         let credsTask = Task.detached(priority: .utility) { CredentialStore.loadBest() }
         let coworkTask = Task.detached(priority: .utility) { options[.showCowork] ? LocalScanner.coworkSessions() : [] }
+        let reposTask = Task.detached(priority: .utility) { options[.showSessions] ? LocalScanner.recentRepos() : [] }
 
         let detected = await credsTask.value
         var creds = ManualTokenStore.credentials() ?? detected
@@ -441,6 +492,8 @@ enum Collector {
         }
         snap.serviceStatus = await status
         snap.sessions = await sessionsTask.value
+        let history = await reposTask.value
+        if options[.showSessions] { KnownRepos.save(snap.sessions.map(\.repoName) + history) }
         snap.today = await todayTask.value
         snap.coworkSessions = await coworkTask.value
         snap.errorMessage = errors.isEmpty ? nil : errors.joined(separator: " · ")

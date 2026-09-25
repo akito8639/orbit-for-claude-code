@@ -16,6 +16,7 @@ private struct StyleFonts {
 private struct WidgetHeader: View {
     var icon: String
     var title: String?   // nil at small size: the mark, the refresh button and the lamp are all that fit
+    var subtitle: String? = nil   // after the title in the accent colour (the Sessions widget's repository filter)
     var trailing: String?
     var fonts: StyleFonts
     var refresh = false   // the trailing label is a refresh button (icon only when there is no label: small widgets)
@@ -24,6 +25,10 @@ private struct WidgetHeader: View {
             Image(systemName: "asterisk").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.claude)
             Text("Claude").font(fonts.body(12, .bold)).lineLimit(1)
             if let title { Text(title).font(fonts.body(12, .medium)).foregroundStyle(.white.opacity(0.75)).lineLimit(1).minimumScaleFactor(0.8) }
+            if let subtitle {
+                Text(subtitle).font(fonts.body(12, .semibold)).foregroundStyle(Palette.claude).lineLimit(1).truncationMode(.middle)
+                    .layoutPriority(-1)
+            }
             Spacer(minLength: 4)
             if trailing != nil || refresh {
                 RefreshStamp(text: trailing, font: fonts.cap(), color: .white.opacity(0.5), refresh: refresh)
@@ -85,6 +90,44 @@ struct RefreshWidgetIntent: AppIntent {
 
 // MARK: - Sessions
 
+/// The Sessions widget's configuration ("Edit Widget"): all sessions, or those of one repository — so one widget per
+/// repository can sit side by side.
+struct SessionsFilterIntent: WidgetConfigurationIntent {
+    static let title: LocalizedStringResource = "Sessions"
+    static let description = IntentDescription("Show the sessions of one repository, or of all of them.")
+
+    @Parameter(title: "Repository", default: RepositoryEntity.all)
+    var repository: RepositoryEntity?
+
+    /// The filter for `SessionsWidgetView`: nil for all repositories.
+    var repo: String? { repository.flatMap { $0.id.isEmpty ? nil : $0.id } }
+}
+
+/// A repository name (`LocalSession.repoName`); the empty id stands for "All repositories".
+struct RepositoryEntity: AppEntity {
+    static let all = RepositoryEntity(id: "")
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Repository"
+    static let defaultQuery = RepositoryQuery()
+
+    var id: String
+    var displayRepresentation: DisplayRepresentation {
+        id.isEmpty ? DisplayRepresentation(title: "All repositories") : DisplayRepresentation(title: "\(id)")
+    }
+}
+
+struct RepositoryQuery: EntityQuery {
+    func entities(for identifiers: [String]) async throws -> [RepositoryEntity] { identifiers.map(RepositoryEntity.init) }
+
+    /// All, then the repositories running now, then the rest of the app's list (Claude Code's history, most recent first).
+    func suggestedEntities() async throws -> [RepositoryEntity] {
+        let running = (SnapshotStore.load()?.sessions ?? []).map(\.repoName)
+        let names = (running + KnownRepos.load()).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+        return [.all] + names.map(RepositoryEntity.init)
+    }
+
+    func defaultResult() async -> RepositoryEntity? { .all }
+}
+
 /// Colour and label for a session's live activity (same source as the desktop app's indicator).
 enum ActivityStyle {
     static func color(_ a: LocalSession.Activity) -> Color {
@@ -122,13 +165,20 @@ struct SessionsWidgetView: View {
     var size: DashboardSize
     var now: Date = .now
     var linksEnabled: Bool = true   // false for offscreen rendering (ImageRenderer cannot draw Link)
+    var repo: String? = nil          // show only this repository's sessions (the widget's configuration); nil = all
 
     private var fonts: StyleFonts { StyleFonts(options.style) }
-    private var sessions: [LocalSession] { options.sortedSessions(snapshot.sessions) }
+    private var sessions: [LocalSession] {
+        let all = options.sortedSessions(snapshot.sessions)
+        guard let repo else { return all }
+        return all.filter { $0.repoName == repo }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: size == .small ? 4 : 6) {
-            WidgetHeader(icon: "terminal", title: size == .small ? nil : L("Sessions"), trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts,
+            // Small: no room for "Sessions", but a filtered widget still says whose sessions it counts.
+            WidgetHeader(icon: "terminal", title: size == .small ? nil : L("Sessions"), subtitle: repo,
+                         trailing: size == .small ? nil : Fmt.relative(snapshot.fetchedAt, now: now), fonts: fonts,
                          refresh: linksEnabled)
             if sessions.isEmpty {
                 Spacer(minLength: 0)
