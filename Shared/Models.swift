@@ -100,6 +100,15 @@ struct UsageWindow: Codable, Identifiable, Hashable {
         return start.addingTimeInterval(now.timeIntervalSince(start) * 100 / utilization)
     }
 
+    /// A cap on one model or surface (Fable, Opus, Cowork…): at 100% the rest of the plan still works.
+    var isPartialCap: Bool { ![.fiveHour, .sevenDay, .other].contains(kind) }
+
+    /// At the limit: nothing more on this window until it resets.
+    var isSpent: Bool { utilization >= 100 }
+
+    /// A partial cap at 100%: its red row already says so, so the headline talks about what is still usable.
+    var isSpentPartialCap: Bool { isPartialCap && isSpent }
+
     /// A projected run-out this close to the reset is noise, not a warning.
     var forecastMargin: TimeInterval { kind == .fiveHour ? 20 * 60 : 3 * 3600 }
 
@@ -415,9 +424,16 @@ struct UsageSnapshot: Codable {
         }
     }
 
+    /// The window the headline falls back to without a forecast: the worst one, leaving out spent partial caps
+    /// unless nothing else is left.
+    func headlineWindow(at now: Date = .now, visible: Set<String>? = nil) -> UsageWindow? {
+        let usable = Set(windows.filter { (visible == nil || visible!.contains($0.id)) && !$0.isSpentPartialCap }.map(\.id))
+        return worstWindow(at: now, visible: usable) ?? worstWindow(at: now, visible: visible)
+    }
+
     /// The headline's answer across the visible windows; nil when there is not enough to go on yet.
     func forecast(at now: Date = .now, visible: Set<String>? = nil) -> UsageForecast? {
-        let candidates = windows.filter { (visible == nil || visible!.contains($0.id)) && $0.resetsAt != nil }
+        let candidates = windows.filter { (visible == nil || visible!.contains($0.id)) && $0.resetsAt != nil && !$0.isSpentPartialCap }
         // Blocked: the answer is when the last exhausted limit comes back.
         if let w = candidates.filter({ $0.utilization >= 100 }).max(by: { $0.resetsAt! < $1.resetsAt! }) {
             return UsageForecast(outcome: .exhausted, window: w, date: w.resetsAt, level: .exhausted)

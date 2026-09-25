@@ -225,9 +225,9 @@ struct DisplayOptions: Hashable {
         self[.showForecast] ? s.forecast(at: now, visible: Set(visibleWindows(s).map(\.id))) : nil
     }
 
-    /// The state the headline and Glass Orbit's glow show: the forecast's, else the worst visible window's.
+    /// The state the headline and Glass Orbit's glow show: the forecast's, else the headline window's.
     func headlineLevel(_ s: UsageSnapshot, at now: Date = .now) -> UsageLevel {
-        forecast(s, at: now)?.level ?? s.worstWindow(at: now, visible: Set(visibleWindows(s).map(\.id)))?.level(at: now) ?? .onTrack
+        forecast(s, at: now)?.level ?? s.headlineWindow(at: now, visible: Set(visibleWindows(s).map(\.id)))?.level(at: now) ?? .onTrack
     }
 
 }

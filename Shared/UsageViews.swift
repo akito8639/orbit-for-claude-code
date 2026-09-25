@@ -463,6 +463,7 @@ struct GlassOrbitView: View {
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
+    private var headlineWorst: UsageWindow? { snapshot.headlineWindow(at: now, visible: Set(windows.map(\.id))) }
     private var forecast: UsageForecast? { options.forecast(snapshot, at: now) }
     private var five: UsageWindow? { windows.first { $0.kind == .fiveHour } }
     /// The weekly window that matters most (all-model week vs per-model caps such as Fable).
@@ -575,10 +576,10 @@ struct GlassOrbitView: View {
                     Spacer(minLength: 2)
                     RefreshStamp(text: Fmt.relative(snapshot.fetchedAt, now: now), font: .system(size: 9, design: .rounded), color: .white.opacity(0.5), refresh: refreshable)
                 }
-                let headline = Headline.text(worst, forecast: forecast, now: now, options: options, snapshot: snapshot)
+                let headline = Headline.text(headlineWorst, forecast: forecast, now: now, options: options, snapshot: snapshot)
                 Text(headline)
                     .font(.system(size: 12.5, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Palette.level(Headline.level(worst, forecast: forecast, now: now)))
+                    .foregroundStyle(Palette.level(Headline.level(headlineWorst, forecast: forecast, now: now)))
                     .lineLimit(1).minimumScaleFactor(0.65).animatedNumber(headline)
                 ForEach(windows.prefix(4)) { w in
                     row(w)
@@ -604,9 +605,9 @@ struct GlassOrbitView: View {
         HStack(spacing: 6) {
             Text(w.title).font(.system(size: 10.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.6)).frame(width: 44, alignment: .leading).lineLimit(1).minimumScaleFactor(0.7)
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 6)
-            Text(Fmt.percent(w.utilization)).font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit().lineLimit(1).frame(width: 34, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
+            Text(Fmt.percent(w.utilization)).font(.system(size: 10.5, weight: .bold, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white).monospacedDigit().lineLimit(1).frame(width: 34, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
-                Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 9, design: .rounded)).foregroundStyle(.white.opacity(0.5)).frame(width: 50, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
+                Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 9, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white.opacity(0.5)).frame(width: 50, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
             }
         }
     }
@@ -636,7 +637,8 @@ struct PaceBarsView: View {
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
-    private var worstLevel: UsageLevel { worst?.level(at: now) ?? .onTrack }
+    private var headlineWorst: UsageWindow? { snapshot.headlineWindow(at: now, visible: Set(windows.map(\.id))) }
+    private var worstLevel: UsageLevel { headlineWorst?.level(at: now) ?? .onTrack }
     private var forecast: UsageForecast? { options.forecast(snapshot, at: now) }
 
     var body: some View {
@@ -649,15 +651,15 @@ struct PaceBarsView: View {
 
     private var header: some View {
         let ring = forecast?.window ?? worst   // the ring shows the window the headline is about
-        let headline = Headline.text(worst, forecast: forecast, now: now, options: options, snapshot: snapshot)
+        let headline = Headline.text(headlineWorst, forecast: forecast, now: now, options: options, snapshot: snapshot)
         return HStack(alignment: .top, spacing: 10) {
             RingView(progress: (ring?.utilization ?? 0) / 100, pace: ring?.paceFraction(at: now), color: Palette.level(ring?.level(at: now) ?? .onTrack), lineWidth: 5, showPace: options[.showPaceMarker])
                 .frame(width: 30, height: 30)
             VStack(alignment: .leading, spacing: 1) {
-                Text(Headline.eyebrow(worst, forecast: forecast, options: options)).font(.system(size: 9, weight: .semibold, design: .rounded)).tracking(1.2).foregroundStyle(.white.opacity(0.55))
+                Text(Headline.eyebrow(headlineWorst, forecast: forecast, options: options)).font(.system(size: 9, weight: .semibold, design: .rounded)).tracking(1.2).foregroundStyle(.white.opacity(0.55))
                 Text(headline)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(Palette.level(Headline.level(worst, forecast: forecast, now: now)))
+                    .foregroundStyle(Palette.level(Headline.level(headlineWorst, forecast: forecast, now: now)))
                     .lineLimit(1).minimumScaleFactor(0.7).animatedNumber(headline)
             }
             Spacer(minLength: 4)
@@ -687,9 +689,9 @@ struct PaceBarsView: View {
             }
             .frame(width: 62, alignment: .leading)
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(lvl), showMarker: options[.showPaceMarker], height: barHeight)
-            Text(Fmt.percent(w.utilization)).font(.system(size: 12, weight: .bold, design: .rounded)).monospacedDigit().lineLimit(1).frame(width: 36, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
+            Text(Fmt.percent(w.utilization)).font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white).monospacedDigit().lineLimit(1).minimumScaleFactor(0.8).frame(width: 38, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
-                Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 10, design: .rounded)).foregroundStyle(.white.opacity(0.55)).frame(width: 56, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
+                Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 10, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white.opacity(0.55)).frame(width: 56, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
             }
         }
     }
@@ -709,7 +711,7 @@ struct PaceBarsView: View {
                     HStack {
                         Text(w.title).font(.system(size: 10, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.7))
                         Spacer()
-                        Text(Fmt.percent(w.utilization)).font(.system(size: 11, weight: .bold, design: .rounded)).monospacedDigit().animatedNumber(w.utilization)
+                        Text(Fmt.percent(w.utilization)).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white).monospacedDigit().animatedNumber(w.utilization)
                     }
                     PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 8)
                 }
@@ -765,7 +767,8 @@ struct ConsoleView: View {
 
     private var windows: [UsageWindow] { options.visibleWindows(snapshot) }
     private var worst: UsageWindow? { snapshot.worstWindow(at: now, visible: Set(windows.map(\.id))) }
-    private var worstLevel: UsageLevel { worst?.level(at: now) ?? .onTrack }
+    private var headlineWorst: UsageWindow? { snapshot.headlineWindow(at: now, visible: Set(windows.map(\.id))) }
+    private var worstLevel: UsageLevel { headlineWorst?.level(at: now) ?? .onTrack }
     private var forecast: UsageForecast? { options.forecast(snapshot, at: now) }
     private let ink = Color(red: 0.86, green: 0.87, blue: 0.84)
     private let dim = Color(red: 0.86, green: 0.87, blue: 0.84).opacity(0.5)
@@ -798,7 +801,7 @@ struct ConsoleView: View {
             PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(lvl), showMarker: options[.showPaceMarker], height: barHeight)
             Text(String(format: "%3d%%", Int(w.utilization.rounded()))).font(mono(11, .bold)).foregroundStyle(Palette.level(lvl)).monospacedDigit().animatedNumber(w.utilization)
             if options[.showResetTimes] {
-                Text("↻" + Fmt.resetLabel(w.resetsAt, now: now)).font(mono(9.5)).foregroundStyle(dim).frame(width: 74, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.8)
+                Text("↻" + Fmt.resetLabel(w.resetsAt, now: now)).font(mono(9.5)).foregroundStyle(w.isSpent ? Palette.bad : dim).frame(width: 74, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.8)
             }
         }
     }
@@ -808,7 +811,7 @@ struct ConsoleView: View {
         if forecast == nil {
             HStack(spacing: 4) {
                 Text("→").font(mono(11)).foregroundStyle(dim)
-                Text(Headline.text(worst, forecast: nil, now: now, options: options, snapshot: snapshot)).font(mono(11, .semibold)).foregroundStyle(Palette.level(worstLevel)).lineLimit(1).minimumScaleFactor(0.75).animatedNumber(worst?.utilization ?? 0)
+                Text(Headline.text(headlineWorst, forecast: nil, now: now, options: options, snapshot: snapshot)).font(mono(11, .semibold)).foregroundStyle(Palette.level(worstLevel)).lineLimit(1).minimumScaleFactor(0.75).animatedNumber(headlineWorst?.utilization ?? 0)
             }
         }
     }
