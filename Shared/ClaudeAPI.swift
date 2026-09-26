@@ -93,13 +93,20 @@ enum ClaudeAPI {
                                    utilization: obj["utilization"] as? Double)
                 continue
             }
-            guard let util = obj["utilization"] as? Double else { continue }
             var resets: Date?
             if let s = obj["resets_at"] as? String { resets = iso.date(from: s) ?? iso2.date(from: s) }
+            // A prepaid balance (e.g. the Claude Cloud credit) comes as dollars under a codename key that may change,
+            // so it is recognised by its shape, not its name: `limit_dollars` charged, `used_dollars` spent.
+            if let limit = obj["limit_dollars"] as? Double, limit > 0 {
+                let used = obj["used_dollars"] as? Double ?? 0
+                windows.append(UsageWindow(id: key, kind: .credit, utilization: used / limit * 100, resetsAt: resets, usedDollars: used, limitDollars: limit))
+                continue
+            }
+            guard let util = obj["utilization"] as? Double else { continue }
             windows.append(UsageWindow(id: key, kind: UsageWindowKind(rawValue: key) ?? .other, utilization: util, resetsAt: resets))
         }
-        // Stable order: 5h, week, then the rest alphabetically.
-        let order: [UsageWindowKind: Int] = [.fiveHour: 0, .sevenDay: 1, .weeklyScoped: 2, .sevenDayOpus: 3, .sevenDaySonnet: 4]
+        // Stable order: 5h, week, the model caps, credits, then the rest alphabetically.
+        let order: [UsageWindowKind: Int] = [.fiveHour: 0, .sevenDay: 1, .weeklyScoped: 2, .sevenDayOpus: 3, .sevenDaySonnet: 4, .credit: 5]
         windows.sort { (order[$0.kind] ?? 9, $0.id) < (order[$1.kind] ?? 9, $1.id) }
         return UsageResult(windows: windows, extra: extra, raw: raw, breakdown: breakdown)
     }

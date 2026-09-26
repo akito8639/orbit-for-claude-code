@@ -349,9 +349,15 @@ struct ClaudeUsageApp: App {
         }
     }
 
-    /// Snapshot for the `--render*` flags: `--live` uses the last fetched one, `--incident` previews the incident styling.
+    /// Snapshot for the `--render*` flags: `--live` uses the last fetched one, `--snapshot file.json` a saved one,
+    /// `--incident` previews the incident styling.
     private static func renderSnapshot(_ args: [String]) -> UsageSnapshot {
         var snap = args.contains("--live") ? (SnapshotStore.load() ?? .placeholder) : .placeholder
+        if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count, let data = FileManager.default.contents(atPath: args[i + 1]) {
+            let dec = JSONDecoder()
+            dec.dateDecodingStrategy = .iso8601
+            if let s = try? dec.decode(UsageSnapshot.self, from: data) { snap = s }
+        }
         if args.contains("--incident") {
             snap.serviceStatus = ServiceStatus(indicator: "major", description: "Partial outage", claudeCodeStatus: "degraded_performance",
                 unresolvedIncidents: ["Elevated error rates for Claude Code"], updatedAt: .now,
@@ -398,7 +404,7 @@ struct MenuBarWindowPicker: View {
 
     /// Every window the API returns, plus the saved pick if it is missing from the current snapshot (so the picker keeps a tag for it).
     private var choices: [(id: String, name: String)] {
-        var choices = store.snapshot.windows.map { (id: $0.id, name: $0.longTitle) }
+        var choices = store.snapshot.windows.filter(\.isLimit).map { (id: $0.id, name: $0.longTitle) }
         let saved = store.options.menuBarWindow
         if saved != AppSettings.autoMenuBarWindow, !choices.contains(where: { $0.id == saved }) {
             choices.append((id: saved, name: saved.replacingOccurrences(of: "weekly_scoped:", with: "")))

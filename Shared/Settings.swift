@@ -31,6 +31,7 @@ enum SettingKey: String, CaseIterable {
     case showSevenDay = "show_seven_day"
     case showModelWindows = "show_model_windows"
     case showExtraUsage = "show_extra_usage"
+    case showCredits = "show_credits"
     case showBreakdown = "show_breakdown"
     case showOtherWindows = "show_other_windows"
     case showPaceMarker = "show_pace_marker"
@@ -64,6 +65,7 @@ enum SettingKey: String, CaseIterable {
         case .showModelWindows: return L("Per-model weekly caps (Fable / Opus / Sonnet)")
         case .showBreakdown: return L("Weekly usage by surface (Claude Code / chat / Cowork)")
         case .showExtraUsage: return L("Extra usage credits")
+        case .showCredits: return L("Prepaid credit balance (Claude Cloud credit)")
         case .showOtherWindows: return L("Show other windows the API returns")
         case .showPaceMarker: return L("Pace target marker")
         case .showForecast: return L("Forecast headline (when a limit runs out at this pace)")
@@ -86,7 +88,7 @@ enum SettingKey: String, CaseIterable {
 
     var section: String {
         switch self {
-        case .showFiveHour, .showSevenDay, .showModelWindows, .showExtraUsage, .showOtherWindows, .showPaceMarker, .showForecast, .showResetTimes, .showBreakdown:
+        case .showFiveHour, .showSevenDay, .showModelWindows, .showExtraUsage, .showCredits, .showOtherWindows, .showPaceMarker, .showForecast, .showResetTimes, .showBreakdown:
             return L("Usage (OAuth usage API)")
         case .showProfile:
             return L("Account (OAuth profile API)")
@@ -206,6 +208,7 @@ struct DisplayOptions: Hashable {
         case .sevenDay: return self[.showSevenDay]
         case .sevenDayOpus, .sevenDaySonnet, .weeklyScoped: return self[.showModelWindows]
         case .sevenDayOAuthApps, .sevenDayCowork: return self[.showOtherWindows]
+        case .credit: return self[.showCredits]
         case .other: return self[.showOtherWindows] && w.resetsAt != nil
         }
     }

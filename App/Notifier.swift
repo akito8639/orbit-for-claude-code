@@ -30,7 +30,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     func evaluate(old: UsageSnapshot?, new: UsageSnapshot, options: DisplayOptions) {
         if options[.notifyLimits] {
             let threshold = Double(AppSettings.notifyThreshold)
-            for w in options.visibleWindows(new) {
+            for w in options.visibleWindows(new) where w.isLimit {
                 let period = w.resetsAt.map { Int($0.timeIntervalSinceReferenceDate / 60) } ?? -1
                 let state = "\(period)|\(Fmt.percent(w.utilization))"
                 if w.utilization >= threshold {

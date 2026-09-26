@@ -19,7 +19,7 @@ Five widgets in one app. Place the ones you need side by side; they share one de
 
 | Widget | Sizes | Shows | Tap |
 |---|---|---|---|
-| **Usage** | S / M / L | 5-hour and weekly limits, per-model weekly caps (Fable / Opus / Sonnet), pace marker, weekly usage by surface, status, sessions, today | claude.ai usage page |
+| **Usage** | S / M / L | 5-hour and weekly limits, per-model weekly caps (Fable / Opus / Sonnet), prepaid credit balance, pace marker, weekly usage by surface, status, sessions, today | claude.ai usage page |
 | **Sessions** | S / M / L | Running Claude Code sessions with a live activity lamp, title or folder, where it was started, uptime, and each session's context window (used / limit, cached vs fresh). Can be filtered to one repository | Opens that session in the Claude desktop app, or the folder in Finder for terminal sessions |
 | **Cowork** | S / M / L | Recent Cowork sessions from the desktop app: title, last activity, model | Claude app |
 | **Claude status** | S / M | status.claude.com: overall state, every component, open incidents. Incidents get a warning halo | status.claude.com |
@@ -31,6 +31,7 @@ Five widgets in one app. Place the ones you need side by side; they share one de
 
 - **Pace marker** — the white tick on a bar or ring is the elapsed fraction of the window. Usage 10 points above it is *above target* (orange), 25 points above is *well above target* (red). Anthropic's own `severity` flag can raise the level but never lower it.
 - **Forecast headline** — the line under the title answers "how long will it last?" instead of repeating a number: *weekly limit ~Sat 05:00 at this pace*, *5h limit reached — back 11:30*, or *Room to spare — lasts until Mon 10:00*. It extends each window's average rate so far (the pace marker, carried forward), picks the limit that runs out first, and ignores run-outs within 3 hours (20 minutes for the 5-hour window) of that window's reset. Times are rounded to the hour (10 minutes when under two hours away). Red when the limit is under a day away, orange beyond that; Glass Orbit's glow follows the same colour. Early in a window, before there is enough to go on, the headline falls back to the pace verdict. A per-model or per-surface cap at 100% (Fable, Opus, Cowork…) is left out, since the rest of the plan still works: its row turns red — percentage and reset time included — and the headline talks about what is still usable. Console types the forecast at its prompt (an incident takes the prompt instead). Settings → *Forecast headline* turns it off.
+- **Credit row** — a prepaid dollar balance (the Claude Cloud credit, for example) gets a row of its own, titled with the charged amount: *$250 cr*. The bar and percentage are how much of it is spent, in Claude's terracotta rather than the pace colours, and the right-hand column is the date the API reports for it. It is a balance, not a limit, so it never drives the headline, the forecast, the menu bar or notifications. The API sends it under a codename key that may change; the app recognises it by shape (`limit_dollars` / `used_dollars`). Settings → *Prepaid credit balance* turns it off.
 - **Activity lamps** — orange: working · red: waiting for you (permission prompt or input) · green: idle · grey: unknown. Same source as the desktop app's indicator (`~/.claude/sessions`), polled every 20 seconds; widgets reload only when something changed.
 - **Context window** — "566.4k / 1M (57%)" is the last turn's `input + cache_read` over the model's limit (200k or 1M), exactly what the desktop app shows. The bar splits cached prompt (blue), cache writes (green) and fresh input (orange).
 - **Entry icon** before a session name: terminal, desktop app window, `</>` for IDE extensions, box for the Agent SDK, two people for Cowork, cloud for remote.
@@ -83,6 +84,7 @@ Only the OAuth token Claude Code stores at login works. `claude setup-token` tok
 |---|---|
 | 5-hour / weekly utilization, reset times, per-model caps, severity | `api.anthropic.com/api/oauth/usage` (`limits` array) |
 | Weekly usage by surface, extra usage credits | same (`seven_day_breakdown`, `extra_usage`) |
+| Prepaid credit balance (the Claude Cloud credit): used / charged, expiry | same (any object with `limit_dollars` / `used_dollars`, whatever its key) |
 | Account e-mail, plan badge (MAX 20x) | `/api/oauth/profile` + keychain item |
 | Service status, components, incidents | `status.claude.com/api/v2/summary.json` |
 | Running sessions, activity, title, entrypoint | `~/.claude/sessions/*.json` (pid liveness checked) |
@@ -113,7 +115,7 @@ homebrew/ Cask template for your tap
 docs/     design proposal, renders, distribution notes
 ```
 
-Render flags for previews: `--render out.png [--live] [--incident]`, `--render-extras out.png [--live] [--incident]`, `--render-panel out.png`, `--render-settings out.png`, `--render-icon out.png`, `--render-icon-bundle App/AppIcon.icon`, plus `--style glassOrbit|paceBars|console`. Diagnostics: `--fetch [--refresh-token]`, `--raw`, `--sessions`, `--sizes`, `--reload`.
+Render flags for previews: `--render out.png [--live | --snapshot file.json] [--incident]`, `--render-extras out.png [--live] [--incident]`, `--render-panel out.png`, `--render-settings out.png`, `--render-icon out.png`, `--render-icon-bundle App/AppIcon.icon`, plus `--style glassOrbit|paceBars|console`. Diagnostics: `--fetch [--refresh-token]`, `--raw`, `--sessions`, `--sizes`, `--reload`.
 
 If the widget gallery does not pick up a new build, `killall chronod NotificationCenter` refreshes it.
 
@@ -125,11 +127,12 @@ MIT — see [LICENSE](LICENSE).
 
 ## 日本語
 
-Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の週間枠）をペース目印付きで表示する、macOS のメニューバーアプリ＋ウィジェット集です。
+Claude Code の使用量（5 時間枠 / 週間枠 / Fable などモデル別の週間枠 / プリペイドのクレジット残高）をペース目印付きで表示する、macOS のメニューバーアプリ＋ウィジェット集です。
 
 - **ウィジェットは 5 種類**: Usage（使用量）、Sessions（起動中セッション。処理中 / 入力待ち / 待機のランプ、コンテキストウィンドウ）、Cowork（デスクトップ版の Cowork セッション）、Claude status（稼働状況。障害時は赤いハロー）、Today（今日のトークン量と API 換算コスト）
 - **タップ**: Usage → claude.ai の使用量ページ、Sessions の行 → そのセッションをデスクトップ版で開く、Status → status.claude.com、Today → 即時更新
 - **リポジトリで絞り込み**: Sessions ウィジェットを右クリック →「"セッション"を編集」→「リポジトリ」で、すべて（既定）か 1 つのリポジトリを選択。選んだ名前はタイトルの後ろに表示。ウィジェットごとに設定できるので、リポジトリごとに並べて置けます。候補は起動中と Claude Code の履歴から新しい順、worktree のセッションは元のリポジトリとして数えます
+- **クレジット行**: Claude Cloud のクレジットなどドル建ての残高は、チャージ額をタイトルにした行（例: *$250 cr*）で表示。バーと % は使った割合、右端は API が返す日付です。上限ではなく残高なので、見出しの判定・予測・メニューバー・通知には影響しません。設定「プリペイドのクレジット残高」で非表示にできます
 - **デザイン**: Glass Orbit / Pace Bars / Console。macOS 26 の着色・クリア表示に対応。更新時はバーや数字がアニメーション
 - **障害時**: Claude status ウィジェットの赤いハローに加え、Usage ウィジェットにもランプの横に状況を表示。文言が長いため、セッション数やトークン量を潰さないよう独立した行に置き、Console では最下段のプロンプトに入力したように見せます
 - **動作要件**: macOS 26 以降、Claude Pro / Max、Claude Code CLI でログイン済み

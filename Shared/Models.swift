@@ -28,7 +28,15 @@ enum UsageWindowKind: String, Codable, CaseIterable {
     case sevenDayOAuthApps = "seven_day_oauth_apps"
     case sevenDayCowork = "seven_day_cowork"
     case weeklyScoped = "weekly_scoped"     // from the `limits` array: per-model weekly cap (e.g. Fable)
+    case credit = "credit"                  // a prepaid dollar balance (e.g. the Claude Cloud credit): used / charged
     case other
+
+    /// A kind this build does not know (written by a newer app into the shared snapshot) decodes as `other`
+    /// instead of failing the whole snapshot, so an older widget keeps showing the rows it understands.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = UsageWindowKind(rawValue: raw) ?? .other
+    }
 
     var duration: TimeInterval {
         switch self {
@@ -46,6 +54,7 @@ enum UsageWindowKind: String, Codable, CaseIterable {
         case .sevenDayOAuthApps: return "apps wk"
         case .sevenDayCowork: return "cowork wk"
         case .weeklyScoped: return "model wk"
+        case .credit: return "credit"
         case .other: return "other"
         }
     }
@@ -59,8 +68,12 @@ struct UsageWindow: Codable, Identifiable, Hashable {
     var scopeName: String? = nil   // e.g. "Fable" for a per-model weekly cap
     var severity: String? = nil    // API-provided: normal / warning / …
     var isActive: Bool? = nil      // API-provided: this limit is the one currently constraining
+    var usedDollars: Double? = nil    // credit only: spent so far
+    var limitDollars: Double? = nil   // credit only: the charged amount
 
+    /// "$250 cr" for a credit: the charged amount is the title, the row's number is how much of it is used.
     var title: String {
+        if kind == .credit { return "\(Fmt.cost(limitDollars ?? 0)) cr" }
         if let scopeName { return "\(scopeName) wk" }
         return kind == .other ? id.replacingOccurrences(of: "_", with: " ") : kind.shortTitle
     }
@@ -70,6 +83,7 @@ struct UsageWindow: Codable, Identifiable, Hashable {
         switch kind {
         case .fiveHour: return L("5-hour window")
         case .sevenDay: return L("Weekly window")
+        case .credit: return L("%@ credit", Fmt.cost(limitDollars ?? 0))
         default: return scopeName.map { L("%@ weekly cap", $0) } ?? title
         }
     }
@@ -78,6 +92,7 @@ struct UsageWindow: Codable, Identifiable, Hashable {
     func unitLabel() -> String {
         switch kind {
         case .fiveHour: return L("of the 5h")
+        case .credit: return L("of the credit")
         default:
             if let scopeName { return L("of the %@ week", scopeName) }
             return L("of the week")
@@ -86,7 +101,7 @@ struct UsageWindow: Codable, Identifiable, Hashable {
 
     /// Fraction of the window that has elapsed (0...1) — the "target" pace.
     func paceFraction(at now: Date = .now) -> Double? {
-        guard let resetsAt else { return nil }
+        guard kind != .credit, let resetsAt else { return nil }   // a credit has no pace: it is a balance, not a window
         let start = resetsAt.addingTimeInterval(-kind.duration)
         let f = now.timeIntervalSince(start) / kind.duration
         return min(max(f, 0), 1)
@@ -101,7 +116,10 @@ struct UsageWindow: Codable, Identifiable, Hashable {
     }
 
     /// A cap on one model or surface (Fable, Opus, Cowork…): at 100% the rest of the plan still works.
-    var isPartialCap: Bool { ![.fiveHour, .sevenDay, .other].contains(kind) }
+    var isPartialCap: Bool { ![.fiveHour, .sevenDay, .other, .credit].contains(kind) }
+
+    /// A limit the headline, forecast and notifications reason about. A credit balance is shown but never drives them.
+    var isLimit: Bool { kind != .credit }
 
     /// At the limit: nothing more on this window until it resets.
     var isSpent: Bool { utilization >= 100 }
@@ -117,11 +135,13 @@ struct UsageWindow: Codable, Identifiable, Hashable {
         switch kind {
         case .fiveHour: return L("5h limit")
         case .sevenDay: return L("weekly limit")
+        case .credit: return L("credit")
         default: return scopeName.map { L("%@ weekly limit", $0) } ?? L("%@ limit", title)
         }
     }
 
     func level(at now: Date = .now) -> UsageLevel {
+        if kind == .credit { return .onTrack }   // spending a credit is what it is for; the bar has its own colour
         let computed = UsageLevel.classify(utilization: utilization, pace: paceFraction(at: now))
         // Let the API's own severity raise (never lower) the level.
         switch severity {
@@ -426,7 +446,7 @@ struct UsageSnapshot: Codable {
 
     /// The window with the worst level (ties broken by utilization).
     func worstWindow(at now: Date = .now, visible: Set<String>? = nil) -> UsageWindow? {
-        let candidates = windows.filter { visible == nil || visible!.contains($0.id) }
+        let candidates = windows.filter { (visible == nil || visible!.contains($0.id)) && $0.isLimit }
         return candidates.max { a, b in
             let la = a.level(at: now), lb = b.level(at: now)
             return la == lb ? a.utilization < b.utilization : la < lb
@@ -442,7 +462,7 @@ struct UsageSnapshot: Codable {
 
     /// The headline's answer across the visible windows; nil when there is not enough to go on yet.
     func forecast(at now: Date = .now, visible: Set<String>? = nil) -> UsageForecast? {
-        let candidates = windows.filter { (visible == nil || visible!.contains($0.id)) && $0.resetsAt != nil && !$0.isSpentPartialCap }
+        let candidates = windows.filter { (visible == nil || visible!.contains($0.id)) && $0.resetsAt != nil && !$0.isSpentPartialCap && $0.isLimit }
         // Blocked: the answer is when the last exhausted limit comes back.
         if let w = candidates.filter({ $0.utilization >= 100 }).max(by: { $0.resetsAt! < $1.resetsAt! }) {
             return UsageForecast(outcome: .exhausted, window: w, date: w.resetsAt, level: .exhausted)

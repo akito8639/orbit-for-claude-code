@@ -19,6 +19,11 @@ enum Palette {
         }
     }
 
+    /// Bar colour of a window row: the level for a limit, Claude terracotta for a credit balance (spending it is not a warning).
+    static func bar(_ w: UsageWindow, at now: Date) -> Color {
+        w.kind == .credit ? claude : level(w.level(at: now))
+    }
+
     static func status(_ s: ServiceStatus?) -> Color {
         guard let s else { return .gray }
         if s.isHealthy { return ok }
@@ -604,7 +609,7 @@ struct GlassOrbitView: View {
     private func row(_ w: UsageWindow) -> some View {
         HStack(spacing: 6) {
             Text(w.title).font(.system(size: 10.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.6)).frame(width: 44, alignment: .leading).lineLimit(1).minimumScaleFactor(0.7)
-            PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 6)
+            PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.bar(w, at: now), showMarker: options[.showPaceMarker], height: 6)
             Text(Fmt.percent(w.utilization)).font(.system(size: 10.5, weight: .bold, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white).monospacedDigit().lineLimit(1).frame(width: 34, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
                 Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 9, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white.opacity(0.5)).frame(width: 50, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
@@ -688,7 +693,7 @@ struct PaceBarsView: View {
                 Text(w.title).font(.system(size: 11.5, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.75)).lineLimit(1)
             }
             .frame(width: 62, alignment: .leading)
-            PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(lvl), showMarker: options[.showPaceMarker], height: barHeight)
+            PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.bar(w, at: now), showMarker: options[.showPaceMarker], height: barHeight)
             Text(Fmt.percent(w.utilization)).font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white).monospacedDigit().lineLimit(1).minimumScaleFactor(0.8).frame(width: 38, alignment: .trailing).contentTransition(.numericText(value: w.utilization)).animation(.easeInOut(duration: 0.9), value: w.utilization)
             if options[.showResetTimes] {
                 Text(Fmt.resetLabel(w.resetsAt, now: now)).font(.system(size: 10, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white.opacity(0.55)).frame(width: 56, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.7)
@@ -713,7 +718,7 @@ struct PaceBarsView: View {
                         Spacer()
                         Text(Fmt.percent(w.utilization)).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(w.isSpent ? Palette.bad : .white).monospacedDigit().animatedNumber(w.utilization)
                     }
-                    PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 8)
+                    PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.bar(w, at: now), showMarker: options[.showPaceMarker], height: 8)
                 }
             }
             Spacer(minLength: 0)
@@ -798,8 +803,8 @@ struct ConsoleView: View {
         let lvl = w.level(at: now)
         return HStack(spacing: 8) {
             Text(w.title.padding(toLength: 9, withPad: " ", startingAt: 0)).font(mono(11)).foregroundStyle(dim).lineLimit(1)
-            PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(lvl), showMarker: options[.showPaceMarker], height: barHeight)
-            Text(String(format: "%3d%%", Int(w.utilization.rounded()))).font(mono(11, .bold)).foregroundStyle(Palette.level(lvl)).monospacedDigit().animatedNumber(w.utilization)
+            PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.bar(w, at: now), showMarker: options[.showPaceMarker], height: barHeight)
+            Text(String(format: "%3d%%", Int(w.utilization.rounded()))).font(mono(11, .bold)).foregroundStyle(Palette.bar(w, at: now)).monospacedDigit().animatedNumber(w.utilization)
             if options[.showResetTimes] {
                 Text("↻" + Fmt.resetLabel(w.resetsAt, now: now)).font(mono(9.5)).foregroundStyle(w.isSpent ? Palette.bad : dim).frame(width: 74, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.8)
             }
@@ -857,9 +862,9 @@ struct ConsoleView: View {
                     HStack {
                         Text(w.title).font(mono(10)).foregroundStyle(dim)
                         Spacer()
-                        Text(Fmt.percent(w.utilization)).font(mono(11, .bold)).foregroundStyle(Palette.level(w.level(at: now))).animatedNumber(w.utilization)
+                        Text(Fmt.percent(w.utilization)).font(mono(11, .bold)).foregroundStyle(Palette.bar(w, at: now)).animatedNumber(w.utilization)
                     }
-                    PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.level(w.level(at: now)), showMarker: options[.showPaceMarker], height: 7)
+                    PaceBar(utilization: w.utilization, pace: w.paceFraction(at: now), color: Palette.bar(w, at: now), showMarker: options[.showPaceMarker], height: 7)
                 }
             }
             Spacer(minLength: 0)
