@@ -56,9 +56,15 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
             }
-            Section(L("Refresh")) {
-                Stepper(L("Fetch interval: %d min", refreshMinutes), value: $refreshMinutes, in: 1...60)
+            Section {
+                Stepper(L("Usage fetch interval: %d min", refreshMinutes), value: $refreshMinutes, in: 1...60)
                     .onChange(of: refreshMinutes) { _, v in AppSettings.refreshMinutes = v; store.settingsChanged() }
+            } header: {
+                Text(L("Refresh"))
+            } footer: {
+                // The interval is often taken for the widgets' redraw period; say what it actually paces.
+                Text(L("How often the app fetches usage and service status from Claude and re-reads the local logs. Session activity is polled every 20 s regardless; widgets redraw when their content changes."))
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

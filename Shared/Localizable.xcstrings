@@ -1117,25 +1117,46 @@
         }
       }
     },
-    "Fetch interval: %d min" : {
-      "extractionState" : "stale",
+    "Usage fetch interval: %d min" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "取得間隔: %d 分"
+            "value" : "使用量の取得間隔: %d 分"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "가져오기 간격: %d분"
+            "value" : "사용량 가져오기 간격: %d분"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "获取间隔：%d 分钟"
+            "value" : "用量获取间隔：%d 分钟"
+          }
+        }
+      }
+    },
+    "How often the app fetches usage and service status from Claude and re-reads the local logs. Session activity is polled every 20 s regardless; widgets redraw when their content changes." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリが Claude から使用量とサービス状態を取得し、ローカルのログを読み直す周期です。セッションの状態はこの設定に関係なく 20 秒ごとに確認され、ウィジェットは表示内容が変わったときに再描画されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱이 Claude에서 사용량과 서비스 상태를 가져오고 로컬 로그를 다시 읽는 주기입니다. 세션 상태는 이 설정과 관계없이 20초마다 확인되며, 위젯은 표시 내용이 바뀔 때 다시 그려집니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用从 Claude 获取用量和服务状态并重新读取本地日志的周期。会话状态每 20 秒检查一次，与此设置无关；小组件在显示内容变化时重绘。"
           }
         }
       }
