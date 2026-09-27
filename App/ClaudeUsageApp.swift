@@ -23,15 +23,20 @@ final class UsageStore: ObservableObject {
     // within hours; from then on WidgetKit deferred the reloads and the widgets — the sessions list most visibly —
     // stopped following the fresh snapshot on disk. So: reload a kind only when what it draws changed, and coalesce.
     private var widgetFingerprints: [String: Int] = [:]
+    private var widgetLampFingerprints: [String: Int] = [:]
     private var widgetReloadedAt: [String: Date] = [:]
-    private var widgetReloadPending: Set<String> = []
+    private var widgetReloads: [String: (task: Task<Void, Never>, lampOnly: Bool)] = [:]   // the queued reload per kind
     private var settingsPublish: Task<Void, Never>?   // debounces a run of settings changes into one forced reload
     private static let widgetMinReloadInterval: TimeInterval = 30
+    /// The sessions' busy⇄idle lamps flip at every turn of every session. They do reload the widgets — a lamp that
+    /// stays "working" for an hour after the turn ended is wrong — but no more often than this, so a busy afternoon
+    /// stays within the daily budget.
+    private static let widgetLampReloadInterval: TimeInterval = 3 * 60
     private static let widgetMaxAge: TimeInterval = 45 * 60   // re-render anyway so "Nm ago" cannot drift for hours
 
     func start() {
         Notifier.shared.prepare()
-        // Cheap poll of ~/.claude/sessions so the activity lamps follow Claude Code within ~30 s (poll + coalesced widget reload).
+        // Cheap poll of ~/.claude/sessions so the activity lamps follow Claude Code within a few minutes (poll + coalesced widget reload).
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             Task { await self?.pollSessions() }
         }
@@ -99,33 +104,45 @@ final class UsageStore: ObservableObject {
         let windows = s.windows.map { w -> [AnyHashable] in
             [w.id, Int(w.utilization.rounded()), w.resetsAt.map { Int($0.timeIntervalSinceReferenceDate / 60) } ?? -1, w.scopeName, w.severity, w.isActive]
         }
-        // Sessions reload the widgets for a session appearing/going, a title change or "waiting for you" — not for the
-        // busy⇄idle lamp, which flips several times per turn and would burn the budget by itself; the context figure
-        // is coarse (10-point steps) for the same reason. The refresh button in the sessions widget shows the exact state.
+        // Sessions reload the widgets promptly for a session appearing/going, a title change or "waiting for you"; the
+        // context figure is coarse (10-point steps) to keep the budget. The busy⇄idle lamp, which flips at every turn,
+        // goes through the slower `lamp` fingerprint (`widgetLampReloadInterval`).
         let sessions = s.sessions.map { [$0.id, $0.name, $0.activity == .needsInput || $0.activity == .permission, ($0.context?.percent ?? -10) / 10,
                                          $0.startedAt.map { Int($0.timeIntervalSinceReferenceDate / 60) }] as [AnyHashable] }
+        let lamps = s.sessions.map { [$0.id, $0.activity] as [AnyHashable] }
         let today = s.today.map { [Fmt.tokens($0.totalTokens), String(format: "%.1f", $0.estimatedCostUSD), $0.byModel] as [AnyHashable] }
         let status = s.serviceStatus.map { [$0.indicator, $0.description, $0.claudeCodeStatus, $0.unresolvedIncidents, $0.components] as [AnyHashable] }
-        reloadWidget(AppConstants.widgetKind, fingerprint: fp(windows, s.extraUsage, s.profile, s.breakdown, status, sessions, today, s.tokenState, s.errorMessage), force: force)
-        reloadWidget("OrbitSessionsWidget", fingerprint: fp(sessions, s.sessions.first?.version), force: force)
+        reloadWidget(AppConstants.widgetKind, fingerprint: fp(windows, s.extraUsage, s.profile, s.breakdown, status, sessions, today, s.tokenState, s.errorMessage),
+                     lamp: fp(lamps), force: force)
+        reloadWidget("OrbitSessionsWidget", fingerprint: fp(sessions, s.sessions.first?.version), lamp: fp(lamps), force: force)
         reloadWidget("OrbitCoworkWidget", fingerprint: fp(s.coworkSessions), force: force)
         reloadWidget("OrbitStatusWidget", fingerprint: fp(status, s.serviceStatus?.updatedAt.map { Int($0.timeIntervalSinceReferenceDate / 60) }), force: force)
         reloadWidget("OrbitTodayWidget", fingerprint: fp(today), force: force)
     }
 
-    private func reloadWidget(_ kind: String, fingerprint: Int, force: Bool) {
-        let changed = widgetFingerprints[kind] != fingerprint
-        widgetFingerprints[kind] = fingerprint
+    /// `fingerprint`: what the kind draws; a change reloads it within `widgetMinReloadInterval`. `lamp`: the part that
+    /// changes often (the sessions' activity); a change there alone waits for `widgetLampReloadInterval` since the
+    /// last reload. A queued reload renders the latest snapshot on disk, so later changes ride on it — except that a
+    /// prompt change pulls a queued lamp-only reload forward.
+    private func reloadWidget(_ kind: String, fingerprint: Int, lamp: Int = 0, force: Bool) {
         let age = Date.now.timeIntervalSince(widgetReloadedAt[kind] ?? .distantPast)
-        guard force || changed || age > Self.widgetMaxAge, !widgetReloadPending.contains(kind) else { return }   // a queued reload renders the latest snapshot anyway
-        widgetReloadPending.insert(kind)
-        Task { @MainActor in
-            let wait = force ? 0 : Self.widgetMinReloadInterval - age
+        let prompt = force || widgetFingerprints[kind] != fingerprint || age > Self.widgetMaxAge
+        guard prompt || widgetLampFingerprints[kind] != lamp else { return }
+        widgetFingerprints[kind] = fingerprint
+        widgetLampFingerprints[kind] = lamp
+        if let queued = widgetReloads[kind] {
+            guard prompt, queued.lampOnly else { return }
+            queued.task.cancel()
+        }
+        let wait = force ? 0 : (prompt ? Self.widgetMinReloadInterval : Self.widgetLampReloadInterval) - age
+        let task = Task { @MainActor [weak self] in
             if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
-            widgetReloadPending.remove(kind)
-            widgetReloadedAt[kind] = .now
+            guard !Task.isCancelled, let self else { return }
+            self.widgetReloads[kind] = nil
+            self.widgetReloadedAt[kind] = .now
             WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
+        widgetReloads[kind] = (task: task, lampOnly: !prompt)
     }
 
     /// Registers/unregisters the app as a login item (System Settings → General → Login Items).
