@@ -187,6 +187,8 @@ extension ClaudeAPI {
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
         guard code == 200, let at = json["access_token"] as? String else {
+            // OAuth errors are {"error": "invalid_grant", "error_description": "..."}; API errors are {"error": {"message": ...}}.
+            if let e = json["error"] as? String { throw APIError.http(code, e) }
             let msg = ((json["error"] as? [String: Any])?["message"] as? String) ?? String(decoding: data.prefix(200), as: UTF8.self)
             throw APIError.http(code, msg)
         }
@@ -403,6 +405,10 @@ enum LocalScanner {
 // MARK: - Collector: builds a snapshot from every enabled source
 
 enum Collector {
+    /// Refresh tokens the server has rejected as invalid_grant. They are dead for good (already rotated or revoked),
+    /// so retrying them every cycle only spams the endpoint; we wait for Claude Code to store a new one instead.
+    private static var rejectedRefreshTokens: Set<String> = []
+
     struct Report {
         var snapshot: UsageSnapshot
         var credentials: OAuthCredentials?
@@ -425,17 +431,30 @@ enum Collector {
         var creds = ManualTokenStore.credentials() ?? detected
         if var c = creds {
             snap.tokenState = c.isExpired ? .expired : .ok
-            if c.isExpired && c.refreshToken != nil && (options[.autoRefreshToken] || forceTokenRefresh) {
+            if c.isExpired, let rt = c.refreshToken, (options[.autoRefreshToken] || forceTokenRefresh),
+               forceTokenRefresh || !rejectedRefreshTokens.contains(rt) {
                 do {
                     c = try await ClaudeAPI.refresh(c)
                     try CredentialStore.save(c)
                     creds = c
                     snap.tokenState = .refreshed
                 } catch {
-                    errors.append("token refresh failed: \(error.localizedDescription)")
+                    // Claude Code may have rotated the token while we were refreshing; pick up its fresh copy if so.
+                    if let fresh = CredentialStore.loadBest(), !fresh.isExpired {
+                        c = fresh; creds = fresh
+                        snap.tokenState = .ok
+                    } else if case ClaudeAPI.APIError.http(400, "invalid_grant") = error {
+                        rejectedRefreshTokens.insert(rt)
+                    } else {
+                        errors.append("token refresh failed: \(error.localizedDescription)")
+                    }
                 }
             }
-            if snap.tokenState != .expired {
+            if snap.tokenState == .expired, let rt = c.refreshToken, rejectedRefreshTokens.contains(rt) {
+                snap.tokenState = .signInRequired
+                errors.append("Claude Code sign-in expired — click to sign in again")
+            }
+            if snap.tokenState.isUsable {
                 do {
                     let u = try await ClaudeAPI.fetchUsage(token: c.accessToken)
                     snap.windows = u.windows
@@ -477,14 +496,14 @@ enum Collector {
                     snap.profile = p
                 }
             } else {
-                errors.append("token expired — run `claude` once, or enable auto refresh")
+                if errors.isEmpty { errors.append("token expired — run `claude` once, or enable auto refresh") }
                 snap.profile = AccountProfile(subscriptionType: c.subscriptionType, rateLimitTier: c.rateLimitTier)
             }
         } else {
             errors.append("no Claude Code credentials found (run `claude login`)")
         }
 
-        if let c = creds, snap.tokenState != .expired {
+        if let c = creds, snap.tokenState.isUsable {
             do { try SharedToken.save(accessToken: c.accessToken, expiresAt: c.expiresAt) }
             catch { NSLog("Orbit: shared token save failed: %@", error.localizedDescription) }
         } else {

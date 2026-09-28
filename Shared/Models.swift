@@ -388,6 +388,10 @@ enum TokenState: String, Codable {
     case expired
     case missing
     case refreshed
+    case signInRequired   // the refresh token was rejected; only `claude auth login` brings it back
+
+    /// Whether the access token can be sent to the API.
+    var isUsable: Bool { self == .ok || self == .refreshed }
 }
 
 // MARK: - Snapshot

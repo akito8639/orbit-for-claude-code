@@ -153,7 +153,8 @@ struct OrbitUsageWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: AppConstants.widgetKind, provider: UsageProvider()) { entry in
             ClaudeUsageWidgetEntryView(entry: entry)
-                .widgetURL(URL(string: "https://claude.ai/settings/usage")!)   // tap → usage page on claude.ai
+                // tap → usage page on claude.ai, or Terminal running `claude auth login` once the sign-in has expired
+                .widgetURL(URL(string: entry.snapshot.tokenState == .signInRequired ? "orbit://login" : "https://claude.ai/settings/usage")!)
         }
         .configurationDisplayName(Text(L("Usage")))
         .description(Text(L("Shows Claude Code's 5-hour / weekly usage, service status and running sessions.")))

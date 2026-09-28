@@ -265,6 +265,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { await store.refresh(manual: true) }
         case "settings":
             UsageStore.openSettingsWindow()
+        case "login":
+            openLoginTerminal()
         case "sessions", "cowork":
             activateClaudeApp()
         case "session":
@@ -278,6 +280,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         default:
             break
         }
+    }
+
+    /// Opens Terminal on `claude auth login`, then asks for a fetch so the widgets pick up the new token.
+    /// A .command file needs no Automation permission, unlike scripting Terminal.
+    static func openLoginTerminal() {
+        let script = """
+        #!/bin/zsh -l
+        export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+        # Orbit may have been launched from a Claude Code session; its marker would make `claude` refuse to start.
+        unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT
+        claude auth login && open -g "orbit://refresh"
+        """
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("orbit-claude-login.command")
+        do {
+            try script.write(to: url, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
+        } catch { NSLog("Orbit: login script write failed: %@", error.localizedDescription); return }
+        guard let terminal = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Terminal") else { return }
+        NSWorkspace.shared.open([url], withApplicationAt: terminal, configuration: NSWorkspace.OpenConfiguration())
     }
 
     static func activateClaudeApp() {
